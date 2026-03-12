@@ -266,7 +266,7 @@
                 <div class="table-wrap">
                     <table>
                         <thead><tr>
-                            <th onclick="sortTable('CompanyName')">Company <span class="sort-arrow" id="sort-CompanyName"></span></th>
+                            <th onclick="sortTable('Title')">Company <span class="sort-arrow" id="sort-Title"></span></th>
                             <th onclick="sortTable('Tier')">Tier <span class="sort-arrow" id="sort-Tier"></span></th>
                             <th onclick="sortTable('Entity')">Entity <span class="sort-arrow" id="sort-Entity"></span></th>
                             <th onclick="sortTable('Trades')">Trades</th>
@@ -367,10 +367,10 @@
         <div id="schemaView" style="display:none;">
             <div class="page-header"><h2>SharePoint <span>List Setup</span></h2></div>
             <div class="card">
-                <div class="card-title">DEG-VendorPrequal List Schema</div>
-                <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Create a SharePoint list named <strong>DEG-VendorPrequal</strong> on your existing DEI site. The button below will auto-create the list with all required columns via Graph API.</p>
-                <button class="btn btn-primary" id="createListBtn" onclick="createSharePointList()">Auto-Create List via Graph API</button>
-                <div style="margin-top:20px;"><table><thead><tr><th>Column Name</th><th>Internal Name</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody id="schemaTableBody"></tbody></table></div>
+                <div class="card-title">Vendors List — Prequal Columns</div>
+                <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Your existing <strong>Vendors</strong> list on the root SharePoint site already has base columns. The button below adds the prequal-specific columns (skips any that already exist). Existing columns are shown in gray.</p>
+                <button class="btn btn-primary" id="createListBtn" onclick="createSharePointList()">Add Prequal Columns to Vendors List</button>
+                <div style="margin-top:20px;"><table><thead><tr><th>Status</th><th>Column Name</th><th>Internal Name</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody id="schemaTableBody"></tbody></table></div>
             </div>
         </div>
     </div>
@@ -397,20 +397,30 @@
 const CONFIG = {
     clientId: '613928f8-0497-47ea-bb0f-c1725a1f156a',
     tenantId: 'ec357a32-5b85-438d-a765-ae33c8eb13b7',
-    siteId: '8103997e-0688-4832-a5b4-bf18de7f96f5',
-    listName: 'DEG-VendorPrequal',
+    siteId: 'distributedei.sharepoint.com',
+    listName: 'Vendors',
     redirectUri: window.location.origin + window.location.pathname,
     scopes: ['Sites.ReadWrite.All']
 };
 
+// EXISTING columns in Vendors list (do NOT re-create)
+const EXISTING_COLUMNS = ['Title','Contact','Address_x0020_1','Address_x0020_2','Phone','Email','AIScore','AIRating','AIAnalysis'];
+
 const LIST_COLUMNS = [
-    { display:'Company Name', name:'CompanyName', type:'text', required:true },
+    // -- Existing columns (mapped) --
+    { display:'Company Name', name:'Title', type:'text', required:true, existing:true },
+    { display:'Contact', name:'Contact', type:'text', required:true, existing:true },
+    { display:'Address 1', name:'Address_x0020_1', type:'text', required:false, existing:true },
+    { display:'Address 2', name:'Address_x0020_2', type:'note', required:false, existing:true },
+    { display:'Phone', name:'Phone', type:'text', required:true, existing:true },
+    { display:'Email', name:'Email', type:'number', required:false, existing:true, notes:'Existing (Number type)' },
+    { display:'AI Score', name:'AIScore', type:'number', required:false, existing:true },
+    { display:'AI Rating', name:'AIRating', type:'choice', required:false, existing:true, choices:['Pass','Conditional','Fail'] },
+    { display:'AI Analysis', name:'AIAnalysis', type:'note', required:false, existing:true },
+    // -- New prequal columns to add --
     { display:'DBA / Trade Name', name:'DBA', type:'text', required:false },
-    { display:'Primary Contact', name:'PrimaryContact', type:'text', required:true },
     { display:'Contact Title', name:'ContactTitle', type:'text', required:false },
-    { display:'Email', name:'Email', type:'text', required:true },
-    { display:'Phone', name:'Phone', type:'text', required:true },
-    { display:'Address', name:'Address', type:'text', required:false },
+    { display:'Vendor Email', name:'VendorEmail', type:'text', required:false, notes:'Text field for email address' },
     { display:'EIN', name:'EIN', type:'text', required:false },
     { display:'Years in Business', name:'YearsInBusiness', type:'number', required:false },
     { display:'Tier', name:'Tier', type:'choice', required:true, choices:['Tier 1','Tier 2','Tier 3'] },
@@ -439,9 +449,6 @@ const LIST_COLUMNS = [
     { display:'Submitted Date', name:'SubmittedDate', type:'dateTime', required:false },
     { display:'Review Date', name:'ReviewDate', type:'dateTime', required:false },
     { display:'Submitted By', name:'SubmittedBy', type:'text', required:false },
-    { display:'AI Score', name:'AIScore', type:'number', required:false, notes:'1-100 automated score' },
-    { display:'AI Rating', name:'AIRating', type:'choice', required:false, choices:['Pass','Conditional','Fail'], notes:'Automated rating' },
-    { display:'AI Analysis', name:'AIAnalysis', type:'note', required:false, notes:'Detailed AI assessment' },
 ];
 
 let msalInstance=null, accessToken=null, currentUser=null, vendors=[], filteredVendors=[], listId=null, sortCol='SubmittedDate', sortDir='desc';
@@ -479,15 +486,19 @@ async function resolveListId(){
 }
 
 async function createSharePointList(){
-    const btn=document.getElementById('createListBtn');btn.disabled=true;btn.textContent='Creating...';
+    const btn=document.getElementById('createListBtn');btn.disabled=true;btn.textContent='Adding columns...';
     try{
-        const nl=await graphPost(`/sites/${CONFIG.siteId}/lists`,{displayName:CONFIG.listName,list:{template:'genericList'}});listId=nl.id;
-        for(const col of LIST_COLUMNS){if(col.name==='Title')continue;let cd={name:col.name,displayName:col.display};
+        // List already exists — just add missing prequal columns
+        if(!listId){const d=await graphGet(`/sites/${CONFIG.siteId}/lists?$filter=displayName eq '${CONFIG.listName}'`);if(d.value&&d.value.length>0)listId=d.value[0].id;}
+        if(!listId){showToast('Vendors list not found on root site.','error');btn.disabled=false;btn.textContent='Add Prequal Columns';return;}
+        const newCols=LIST_COLUMNS.filter(c=>!c.existing);
+        let added=0;
+        for(const col of newCols){let cd={name:col.name,displayName:col.display};
             if(col.type==='text')cd.text={maxLength:255};else if(col.type==='number')cd.number={};else if(col.type==='note')cd.text={maxLength:10000,allowMultipleLines:true};else if(col.type==='dateTime')cd.dateTime={format:'dateOnly'};else if(col.type==='choice')cd.choice={choices:col.choices,displayAs:'dropDownMenu'};
-            try{await graphPost(`/sites/${CONFIG.siteId}/lists/${listId}/columns`,cd);}catch(e){console.warn(`Col ${col.name}: ${e.message}`);}
+            try{await graphPost(`/sites/${CONFIG.siteId}/lists/${listId}/columns`,cd);added++;}catch(e){console.warn(`Col ${col.name}: ${e.message} (may already exist)`);}
         }
-        showToast('SharePoint list created!','success');btn.textContent='List Created ✓';document.getElementById('cbBanner').style.display='flex';
-    }catch(e){showToast('Error: '+e.message,'error');btn.disabled=false;btn.textContent='Auto-Create List via Graph API';}
+        showToast(`Added ${added} prequal columns to Vendors list!`,'success');btn.textContent=`${added} Columns Added ✓`;document.getElementById('cbBanner').style.display='flex';
+    }catch(e){showToast('Error: '+e.message,'error');btn.disabled=false;btn.textContent='Add Prequal Columns';}
 }
 
 async function loadVendors(){
@@ -503,7 +514,7 @@ async function submitPrequal(){
     if(!trades.length){showToast('Select at least one trade.','error');return;}
     if(!listId){showToast('Create the SharePoint list first.','error');return;}
     const refs=[];document.querySelectorAll('.ref-row').forEach(r=>{const c=r.querySelector('.ref-company').value.trim(),n=r.querySelector('.ref-contact').value.trim(),p=r.querySelector('.ref-phone').value.trim();if(c)refs.push(`${c} | ${n} | ${p}`);});
-    const fields={Title:cn,CompanyName:cn,DBA:val('f_dba'),PrimaryContact:co,ContactTitle:val('f_contactTitle'),Email:em,Phone:ph,Address:val('f_address'),EIN:val('f_ein'),YearsInBusiness:numVal('f_yearsInBusiness'),Tier:ti,Entity:en,Trades:trades.join(', '),Licenses:val('f_licenses'),OEMCerts:val('f_oemCerts'),GL_Limit:val('f_glLimit'),WC_Carrier:val('f_wcCarrier'),COI_Expiry:val('f_coiExpiry')||null,EMR_Current:val('f_emrCurrent'),EMR_Prior:val('f_emrPrior'),EMR_2Prior:val('f_emr2Prior'),SafetyProgram:val('f_safetyProgram')||null,OSHA_Incidents:numVal('f_oshaIncidents'),Revenue:val('f_revenue'),DUNS:val('f_duns'),BondCapacity:val('f_bondCapacity'),BankRef:val('f_bankRef'),Ref1:refs[0]||'',Ref2:refs[1]||'',Ref3:refs[2]||'',Notes:val('f_notes'),Status:'Pending',SubmittedDate:new Date().toISOString().split('T')[0],SubmittedBy:currentUser.name||currentUser.username};
+    const fields={Title:cn,Contact:co,DBA:val('f_dba'),ContactTitle:val('f_contactTitle'),VendorEmail:em,Phone:ph,Address_x0020_1:val('f_address'),EIN:val('f_ein'),YearsInBusiness:numVal('f_yearsInBusiness'),Tier:ti,Entity:en,Trades:trades.join(', '),Licenses:val('f_licenses'),OEMCerts:val('f_oemCerts'),GL_Limit:val('f_glLimit'),WC_Carrier:val('f_wcCarrier'),COI_Expiry:val('f_coiExpiry')||null,EMR_Current:val('f_emrCurrent'),EMR_Prior:val('f_emrPrior'),EMR_2Prior:val('f_emr2Prior'),SafetyProgram:val('f_safetyProgram')||null,OSHA_Incidents:numVal('f_oshaIncidents'),Revenue:val('f_revenue'),DUNS:val('f_duns'),BondCapacity:val('f_bondCapacity'),BankRef:val('f_bankRef'),Ref1:refs[0]||'',Ref2:refs[1]||'',Ref3:refs[2]||'',Notes:val('f_notes'),Status:'Pending',SubmittedDate:new Date().toISOString().split('T')[0],SubmittedBy:currentUser.name||currentUser.username};
     btn.disabled=true;btn.textContent='Submitting...';
     try{await graphPost(`/sites/${CONFIG.siteId}/lists/${listId}/items`,{fields});showToast('Vendor submitted!','success');clearForm();switchTab('dashboard');loadVendors();}
     catch(e){showToast('Error: '+e.message,'error');}finally{btn.disabled=false;btn.textContent='Submit Prequalification';}
@@ -511,7 +522,7 @@ async function submitPrequal(){
 
 function applyFilters(){
     const s=document.getElementById('filterSearch').value.toLowerCase(),st=document.getElementById('filterStatus').value,ti=document.getElementById('filterTier').value,en=document.getElementById('filterEntity').value;
-    filteredVendors=vendors.filter(v=>{if(st&&v.Status!==st)return false;if(ti&&v.Tier!==ti)return false;if(en&&v.Entity!==en)return false;if(s){const h=[v.CompanyName,v.Trades,v.PrimaryContact,v.Email,v.Entity].join(' ').toLowerCase();if(!h.includes(s))return false;}return true;});
+    filteredVendors=vendors.filter(v=>{if(st&&v.Status!==st)return false;if(ti&&v.Tier!==ti)return false;if(en&&v.Entity!==en)return false;if(s){const h=[v.Title,v.Trades,v.Contact,v.VendorEmail,v.Entity].join(' ').toLowerCase();if(!h.includes(s))return false;}return true;});
     filteredVendors.sort((a,b)=>{let av=a[sortCol]||'',bv=b[sortCol]||'';if(typeof av==='string')av=av.toLowerCase();if(typeof bv==='string')bv=bv.toLowerCase();if(av<bv)return sortDir==='asc'?-1:1;if(av>bv)return sortDir==='asc'?1:-1;return 0;});
     renderTable();
 }
@@ -521,7 +532,7 @@ function renderTable(){
     const tb=document.getElementById('vendorTableBody');
     if(!filteredVendors.length){tb.innerHTML='<tr class="loading-row"><td colspan="10">No vendors match your filters.</td></tr>';return;}
     tb.innerHTML=filteredVendors.map(v=>`<tr>
-        <td><strong>${esc(v.CompanyName||'')}</strong><br><span style="font-size:11px;color:var(--text-light)">${esc(v.PrimaryContact||'')}</span></td>
+        <td><strong>${esc(v.Title||'')}</strong><br><span style="font-size:11px;color:var(--text-light)">${esc(v.Contact||'')}</span></td>
         <td>${tierBadge(v.Tier)}</td><td>${esc(v.Entity||'')}</td>
         <td style="max-width:180px;font-size:12px;">${esc(v.Trades||'')}</td>
         <td>${statusBadge(v.Status)}</td>
@@ -550,14 +561,14 @@ function openDetail(id){
     const emrAvg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2):'—';
     const ci=(l,val)=>{const h=val&&val!=='No'&&val!=='—';return `<div class="checklist-item"><span class="check ${h?'yes':'no'}">${h?'✓':'✗'}</span> ${l}</div>`;};
     panel.innerHTML=`
-        <div class="dp-header"><div><h2>${esc(v.CompanyName||'')}</h2><span style="font-size:13px;color:var(--text-light)">${esc(v.DBA||'')}</span></div><button class="dp-close" onclick="closeDetail()">✕</button></div>
+        <div class="dp-header"><div><h2>${esc(v.Title||'')}</h2><span style="font-size:13px;color:var(--text-light)">${esc(v.DBA||'')}</span></div><button class="dp-close" onclick="closeDetail()">✕</button></div>
         <div style="display:flex;gap:8px;margin-bottom:16px;">${tierBadge(v.Tier)} ${statusBadge(v.Status)}<span style="font-size:12px;color:var(--text-light);align-self:center;margin-left:auto;">ID: ${v.id}</span></div>
         <div class="dp-section"><h4>Contact</h4><div class="dp-grid">
-            <div class="dp-field"><label>Name</label><span>${esc(v.PrimaryContact||'')}</span></div>
+            <div class="dp-field"><label>Name</label><span>${esc(v.Contact||'')}</span></div>
             <div class="dp-field"><label>Title</label><span>${esc(v.ContactTitle||'—')}</span></div>
-            <div class="dp-field"><label>Email</label><span>${esc(v.Email||'')}</span></div>
+            <div class="dp-field"><label>Email</label><span>${esc(v.VendorEmail||'')}</span></div>
             <div class="dp-field"><label>Phone</label><span>${esc(v.Phone||'')}</span></div>
-            <div class="dp-field" style="grid-column:1/-1"><label>Address</label><span>${esc(v.Address||'—')}</span></div>
+            <div class="dp-field" style="grid-column:1/-1"><label>Address</label><span>${esc(v.Address_x0020_1||'—')}</span></div>
         </div></div>
         <div class="dp-section"><h4>Scope</h4><div class="dp-grid">
             <div class="dp-field"><label>Entity</label><span>${esc(v.Entity||'')}</span></div>
@@ -616,7 +627,7 @@ async function saveReview(id){
 }
 
 function populateSchemaTable(){
-    document.getElementById('schemaTableBody').innerHTML=LIST_COLUMNS.map(c=>`<tr><td>${esc(c.display)}</td><td style="font-family:monospace;font-size:12px;">${esc(c.name)}</td><td>${esc(c.type)}${c.choices?` [${c.choices.join(', ')}]`:''}</td><td>${c.required?'✓':''}</td><td style="font-size:12px;color:var(--text-light)">${esc(c.notes||(c.defaultValue?`Default: ${c.defaultValue}`:''))}</td></tr>`).join('');
+    document.getElementById('schemaTableBody').innerHTML=LIST_COLUMNS.map(c=>`<tr style="${c.existing?'opacity:0.5':''}"><td>${c.existing?'<span style="color:var(--green)">Existing</span>':'<span style="color:var(--navy);font-weight:600">NEW</span>'}</td><td>${esc(c.display)}</td><td style="font-family:monospace;font-size:12px;">${esc(c.name)}</td><td>${esc(c.type)}${c.choices?` [${c.choices.join(', ')}]`:''}</td><td>${c.required?'✓':''}</td><td style="font-size:12px;color:var(--text-light)">${esc(c.notes||(c.defaultValue?`Default: ${c.defaultValue}`:''))}</td></tr>`).join('');
 }
 
 function switchTab(t){
@@ -664,7 +675,7 @@ function buildScoringPrompt(v) {
     return `You are an expert construction subcontractor prequalification analyst for a commercial solar and battery energy storage EPC company. Evaluate this vendor application and provide a risk-weighted score.
 
 VENDOR APPLICATION DATA:
-Company: ${v.CompanyName || 'N/A'}
+Company: ${v.Title || 'N/A'}
 Tier: ${v.Tier || 'N/A'} (Tier 1: <$100K, Tier 2: $100K-$500K, Tier 3: >$500K)
 Entity: ${v.Entity || 'N/A'}
 Years in Business: ${v.YearsInBusiness || 'N/A'}
@@ -713,7 +724,7 @@ async function scoreVendor(id) {
     const v = vendors.find(x => x.id === id);
     if (!v) return;
 
-    showToast(`Scoring ${v.CompanyName}...`);
+    showToast(`Scoring ${v.Title}...`);
 
     try {
         const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -748,7 +759,7 @@ async function scoreVendor(id) {
             AIAnalysis: result.analysis
         });
 
-        showToast(`${v.CompanyName}: ${result.score}/100 — ${result.rating}`, 'success');
+        showToast(`${v.Title}: ${result.score}/100 — ${result.rating}`, 'success');
         await loadVendors();
 
         // Re-open detail panel with updated data
@@ -777,7 +788,7 @@ async function scoreAllPending() {
             // Brief delay to respect rate limits
             await new Promise(r => setTimeout(r, 1500));
         } catch (err) {
-            console.error(`Failed to score ${v.CompanyName}:`, err);
+            console.error(`Failed to score ${v.Title}:`, err);
         }
     }
 
