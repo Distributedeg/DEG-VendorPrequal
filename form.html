@@ -84,7 +84,6 @@
         <div class="form-grid">
             <div class="form-group"><label>Federal Tax ID (EIN)</label><input type="text" id="f_ein" placeholder="XX-XXXXXXX"></div>
             <div class="form-group"><label>Annual Revenue</label><input type="text" id="f_revenue" placeholder="e.g. $5,000,000"></div>
-            <div class="form-group full"><label>Documentation on File</label><div class="checkbox-group" id="f_docsOnFile"><label><input type="checkbox" value="W-9"> W-9</label><label><input type="checkbox" value="NDA"> NDA</label><label><input type="checkbox" value="COI"> COI</label><label><input type="checkbox" value="Business Registration"> Business Reg</label><label><input type="checkbox" value="Licenses"> Licenses</label></div></div>
             <div class="form-group"><label>Audited Financials</label><select id="f_auditedFinancials"><option value="">Select...</option><option value="Yes - 3yr">Yes — 3 Years</option><option value="Partial">Partial</option><option value="No">No</option></select></div>
             <div class="form-group"><label>D&amp;B / DUNS Number</label><input type="text" id="f_duns"></div>
         </div>
@@ -176,7 +175,7 @@ async function submitForm(){
         Address1:val('f_address'),VendorType:vt,YearEstablished:parseInt(val('f_yearsInBusiness'))||0,
         Website:val('f_website'),CoreFunctions:val('f_coreFunctions'),ServiceRegion:gc('f_states'),
         Tier:ti,Entity:en,Trades:gc('f_trades'),Licenses:val('f_licenses'),OEMCerts:val('f_oemCerts'),
-        EIN:val('f_ein'),Revenue:val('f_revenue'),DocsOnFile:gc('f_docsOnFile'),
+        EIN:val('f_ein'),Revenue:val('f_revenue'),
         AuditedFinancials:val('f_auditedFinancials'),DUNS:val('f_duns'),GL_Limit:val('f_glLimit'),
         ProfLiability:val('f_profLiability'),BondCapacity:val('f_bondCapacity'),WC_Carrier:val('f_wcCarrier'),
         COI_Expiry:val('f_coiExpiry')||'',BankRef:val('f_bankRef'),
