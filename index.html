@@ -824,7 +824,14 @@ async function initMsal() {
     };
     msalInstance = new msal.PublicClientApplication(msalConfig);
     await msalInstance.initialize();
-    await msalInstance.handleRedirectPromise();
+
+    // Handle redirect response first
+    const redirectResp = await msalInstance.handleRedirectPromise();
+    if (redirectResp) {
+        msalInstance.setActiveAccount(redirectResp.account);
+        await acquireToken();
+        return;
+    }
 
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
@@ -834,13 +841,8 @@ async function initMsal() {
 }
 
 async function signIn() {
-    try {
-        const resp = await msalInstance.loginPopup({ scopes: CONFIG.scopes });
-        msalInstance.setActiveAccount(resp.account);
-        await acquireToken();
-    } catch (err) {
-        showToast('Sign-in failed: ' + err.message, 'error');
-    }
+    // Use redirect flow instead of popup to avoid nested popup issues
+    await msalInstance.loginRedirect({ scopes: CONFIG.scopes });
 }
 
 async function acquireToken() {
@@ -850,14 +852,8 @@ async function acquireToken() {
         currentUser = resp.account;
         onAuthenticated();
     } catch (err) {
-        try {
-            const resp = await msalInstance.acquireTokenPopup({ scopes: CONFIG.scopes });
-            accessToken = resp.accessToken;
-            currentUser = resp.account;
-            onAuthenticated();
-        } catch (e) {
-            showToast('Token error: ' + e.message, 'error');
-        }
+        // Fall back to redirect if silent fails
+        await msalInstance.acquireTokenRedirect({ scopes: CONFIG.scopes });
     }
 }
 
