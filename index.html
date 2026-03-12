@@ -807,7 +807,7 @@ async function createSharePointList(){
 
 async function loadVendors(){
     if(!listId){document.getElementById('vendorTableBody').innerHTML='<tr class="loading-row"><td colspan="9">No list found. Use <strong>List Setup</strong> to create it.</td></tr>';return;}
-    try{const d=await graphGet(`/sites/${CONFIG.siteId}/lists/${listId}/items?$expand=fields&$top=500`);vendors=(d.value||[]).map(i=>({id:i.id,...i.fields}));applyFilters();updateStats();}
+    try{const d=await graphGet(`/sites/${CONFIG.siteId}/lists/${listId}/items?$expand=fields&$top=500`);vendors=(d.value||[]).map(i=>({id:i.id,...i.fields}));console.log('SP Field Names:',vendors.length>0?Object.keys(vendors[0]).join(', '):'no vendors');applyFilters();updateStats();}
     catch(e){showToast('Error loading: '+e.message,'error');}
 }
 
