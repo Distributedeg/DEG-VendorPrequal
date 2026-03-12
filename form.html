@@ -269,6 +269,7 @@
                 <div class="form-group full"><label>Address <span class="req">*</span></label><input type="text" id="f_address" placeholder="Street, City, State, ZIP"></div>
                 <div class="form-group"><label>Federal Tax ID (EIN) <span class="req">*</span></label><input type="text" id="f_ein" placeholder="XX-XXXXXXX"></div>
                 <div class="form-group"><label>Years in Business</label><input type="number" id="f_yearsInBusiness" placeholder="e.g. 12"></div>
+                <div class="form-group full"><label>Website</label><input type="text" id="f_website" placeholder="www.company.com"></div>
             </div>
         </div>
         <div class="nav-row"><div></div><button class="btn-nav primary" onclick="goStep(2)">Continue →</button></div>
@@ -546,6 +547,7 @@ async function submitForm() {
         Address1: val('f_address'),
         EIN: val('f_ein'),
         YearEstablished: parseInt(val('f_yearsInBusiness')) || 0,
+        Website: val('f_website'),
         Tier: val('f_tier'),
         Entity: val('f_entity'),
         Trades: getCheckedTrades().join(', '),
