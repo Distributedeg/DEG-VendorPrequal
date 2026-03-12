@@ -261,7 +261,7 @@
                     <input type="text" id="filterSearch" placeholder="Search company, trade, contact..." oninput="applyFilters()">
                     <select id="filterStatus" onchange="applyFilters()"><option value="">All Statuses</option><option value="Pending">Pending</option><option value="Under Review">Under Review</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option><option value="Expired">Expired</option></select>
                     <select id="filterTier" onchange="applyFilters()"><option value="">All Tiers</option><option value="Tier 1">Tier 1</option><option value="Tier 2">Tier 2</option><option value="Tier 3">Tier 3</option></select>
-                    <select id="filterEntity" onchange="applyFilters()"><option value="">All Entities</option><option value="DEI">DEI</option><option value="DER">DER</option><option value="DEP">DEP</option><option value="DES">DES</option><option value="Mike EPC">Mike EPC</option></select>
+                    <select id="filterEntity" onchange="applyFilters()"><option value="">All Entities</option><option value="DEI">DEI</option><option value="DER">DER</option></select>
                     <select id="filterType" onchange="applyFilters()"><option value="">All Types</option><option value="Vendor">Vendor</option><option value="Subcontractor">Subcontractor</option></select>
                 </div>
                 <div class="table-wrap">
@@ -299,7 +299,7 @@
                             <option value="Vendor">Vendor (Supplier / Manufacturer / Service Provider)</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>DEG Entity <span class="req">*</span></label><select id="f_entity"><option value="">Select entity...</option><option value="DEI">DEI</option><option value="DER">DER</option><option value="DEP">DEP</option><option value="DES">DES</option><option value="Mike EPC">Mike EPC</option></select></div>
+                    <div class="form-group"><label>DEG Entity <span class="req">*</span></label><select id="f_entity"><option value="">Select entity...</option><option value="DEI">DEI</option><option value="DER">DER</option></select></div>
                 </div>
             </div>
 
@@ -661,7 +661,7 @@ const LIST_COLUMNS = [
     { display:'Website', name:'Website', type:'text', required:false },
     { display:'Core Functions', name:'CoreFunctions', type:'text', required:false },
     { display:'Tier', name:'Tier', type:'choice', required:true, choices:['Tier 1','Tier 2','Tier 3'] },
-    { display:'DEG Entity', name:'Entity', type:'choice', required:true, choices:['DEI','DER','DEP','DES','Mike EPC'] },
+    { display:'DEG Entity', name:'Entity', type:'choice', required:true, choices:['DEI','DER'] },
     { display:'Trades', name:'Trades', type:'text', required:true, notes:'Comma-separated' },
     // -- 1. Financial Stability --
     { display:'EIN', name:'EIN', type:'text', required:false },
