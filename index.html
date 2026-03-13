@@ -268,15 +268,15 @@
                     <table>
                         <thead><tr>
                             <th onclick="sortTable('Title')">Company <span class="sort-arrow" id="sort-Title"></span></th>
+                            <th>Contact</th>
+                            <th>Phone</th>
+                            <th>Email</th>
                             <th onclick="sortTable('VendorType')">Type <span class="sort-arrow" id="sort-VendorType"></span></th>
                             <th onclick="sortTable('Tier')">Tier <span class="sort-arrow" id="sort-Tier"></span></th>
                             <th onclick="sortTable('Entity')">Entity <span class="sort-arrow" id="sort-Entity"></span></th>
-                            <th onclick="sortTable('Trades')">Trades</th>
                             <th onclick="sortTable('Status')">Status <span class="sort-arrow" id="sort-Status"></span></th>
                             <th onclick="sortTable('EMR_Current')">EMR</th>
                             <th onclick="sortTable('AIScore')">AI Score <span class="sort-arrow" id="sort-AIScore"></span></th>
-                            <th onclick="sortTable('COI_Expiry')">COI Exp <span class="sort-arrow" id="sort-COI_Expiry"></span></th>
-                            <th onclick="sortTable('SubmittedDate')">Submitted <span class="sort-arrow" id="sort-SubmittedDate"></span></th>
                             <th>Actions</th>
                         </tr></thead>
                         <tbody id="vendorTableBody"><tr class="loading-row"><td colspan="10"><div class="spinner"></div> Loading vendors...</td></tr></tbody>
@@ -821,8 +821,8 @@ async function submitPrequal(){
     const refs=[];document.querySelectorAll('.ref-row').forEach(r=>{const c=r.querySelector('.ref-company').value.trim(),n=r.querySelector('.ref-contact').value.trim(),p=r.querySelector('.ref-phone').value.trim();if(c)refs.push(`${c} | ${n} | ${p}`);});
     const isSub=vt==='Subcontractor';
     const fields={
-        Title:cn, Contact:co, DBA:val('f_dba'), ContactTitle:val('f_contactTitle'), VendorEmail:em, Phone:ph,
-        Address_x0020_1:val('f_address'), VendorType:vt, YearEstablished:numVal('f_yearsInBusiness'),
+        Title:cn, field_1:co, DBA:val('f_dba'), ContactTitle:val('f_contactTitle'), VendorEmail:em, field_5:ph,
+        field_2:val('f_address'), VendorType:vt, YearEstablished:numVal('f_yearsInBusiness'),
         ServiceRegion:val('f_serviceRegion'), Website:val('f_website'), CoreFunctions:val('f_coreFunctions'),
         Tier:ti, Entity:en, Trades:trades.join(', '),
         // 1. Financial
@@ -840,7 +840,7 @@ async function submitPrequal(){
         // 6. Turnover
         TurnoverRate:val('f_turnover')||null,
         // References & Notes
-        Ref1:refs[0]||'', Ref2:refs[1]||'', Ref3:refs[2]||'', Notes:val('f_notes'),
+        _x0052_ef1:refs[0]||'', _x0052_ef2:refs[1]||'', _x0052_ef3:refs[2]||'', Notes:val('f_notes'),
         Status:'Pending', SubmittedDate:new Date().toISOString().split('T')[0], SubmittedBy:currentUser.name||currentUser.username
     };
     if(isSub){
@@ -877,7 +877,7 @@ async function submitPrequal(){
 
 function applyFilters(){
     const s=document.getElementById('filterSearch').value.toLowerCase(),st=document.getElementById('filterStatus').value,ti=document.getElementById('filterTier').value,en=document.getElementById('filterEntity').value,vt=document.getElementById('filterType').value;
-    filteredVendors=vendors.filter(v=>{if(st&&v.Status!==st)return false;if(ti&&v.Tier!==ti)return false;if(en&&v.Entity!==en)return false;if(vt&&v.VendorType!==vt)return false;if(s){const h=[v.Title,v.Trades,v.Contact,v.VendorEmail,v.Entity,v.VendorType].join(' ').toLowerCase();if(!h.includes(s))return false;}return true;});
+    filteredVendors=vendors.filter(v=>{if(st&&v.Status!==st)return false;if(ti&&v.Tier!==ti)return false;if(en&&v.Entity!==en)return false;if(vt&&v.VendorType!==vt)return false;if(s){const h=[v.Title,v.Trades,v.field_1,v.VendorEmail,v.Entity,v.VendorType,v.field_5].join(' ').toLowerCase();if(!h.includes(s))return false;}return true;});
     filteredVendors.sort((a,b)=>{let av=a[sortCol]||'',bv=b[sortCol]||'';if(typeof av==='string')av=av.toLowerCase();if(typeof bv==='string')bv=bv.toLowerCase();if(av<bv)return sortDir==='asc'?-1:1;if(av>bv)return sortDir==='asc'?1:-1;return 0;});
     renderTable();
 }
@@ -887,14 +887,15 @@ function renderTable(){
     const tb=document.getElementById('vendorTableBody');
     if(!filteredVendors.length){tb.innerHTML='<tr class="loading-row"><td colspan="11">No vendors match your filters.</td></tr>';return;}
     tb.innerHTML=filteredVendors.map(v=>`<tr>
-        <td><strong>${esc(v.Title||'')}</strong><br><span style="font-size:11px;color:var(--text-light)">${esc(v.Contact||'')}</span></td>
+        <td><strong>${esc(v.Title||'')}</strong></td>
+        <td style="font-size:12px;">${esc(v.field_1||'—')}</td>
+        <td style="font-size:12px;">${esc(v.field_5||'—')}</td>
+        <td style="font-size:12px;">${esc(v.VendorEmail||'—')}</td>
         <td style="font-size:11px;font-weight:600;color:${v.VendorType==='Subcontractor'?'var(--navy)':'var(--green-dark)'}">${esc(v.VendorType||'—')}</td>
         <td>${tierBadge(v.Tier)}</td><td>${esc(v.Entity||'')}</td>
-        <td style="max-width:180px;font-size:12px;">${esc(v.Trades||'')}</td>
         <td>${statusBadge(v.Status)}</td>
         <td style="font-family:'Barlow Condensed',sans-serif;font-weight:600;color:${v.EMR_Current&&parseFloat(v.EMR_Current)>=1?'var(--red)':'var(--navy)'}">${esc(v.EMR_Current||'—')}</td>
         <td>${aiScoreBadge(v.AIScore,v.AIRating)}</td>
-        <td>${formatDate(v.COI_Expiry)}</td><td>${formatDate(v.SubmittedDate)}</td>
         <td><button class="btn btn-secondary btn-sm" onclick="openDetail('${v.id}')">Review</button></td>
     </tr>`).join('');
 }
@@ -920,11 +921,11 @@ function openDetail(id){
         <div class="dp-header"><div><h2>${esc(v.Title||'')}</h2><span style="font-size:13px;color:var(--text-light)">${esc(v.DBA||'')}</span></div><button class="dp-close" onclick="closeDetail()">✕</button></div>
         <div style="display:flex;gap:8px;margin-bottom:16px;">${tierBadge(v.Tier)} ${statusBadge(v.Status)}<span style="font-size:12px;color:var(--text-light);align-self:center;margin-left:auto;">ID: ${v.id}</span></div>
         <div class="dp-section"><h4>Contact</h4><div class="dp-grid">
-            <div class="dp-field"><label>Name</label><span>${esc(v.Contact||'')}</span></div>
+            <div class="dp-field"><label>Name</label><span>${esc(v.field_1||'')}</span></div>
             <div class="dp-field"><label>Title</label><span>${esc(v.ContactTitle||'—')}</span></div>
             <div class="dp-field"><label>Email</label><span>${esc(v.VendorEmail||'')}</span></div>
-            <div class="dp-field"><label>Phone</label><span>${esc(v.Phone||'')}</span></div>
-            <div class="dp-field" style="grid-column:1/-1"><label>Address</label><span>${esc(v.Address_x0020_1||'—')}</span></div>
+            <div class="dp-field"><label>Phone</label><span>${esc(v.field_5||'')}</span></div>
+            <div class="dp-field" style="grid-column:1/-1"><label>Address</label><span>${esc(v.field_2||'—')}</span></div>
         </div></div>
         <div class="dp-section"><h4>Scope</h4><div class="dp-grid">
             <div class="dp-field"><label>Entity</label><span>${esc(v.Entity||'')}</span></div>
@@ -947,11 +948,11 @@ function openDetail(id){
             ${ci('EMR under 1.0',v.EMR_Current&&parseFloat(v.EMR_Current)<1?'Yes':'')}
             ${ci('Written safety program',v.SafetyProgram)}
             ${ci('Zero OSHA incidents (3yr)',v.OSHA_Incidents!==undefined&&v.OSHA_Incidents===0?'Yes':'')}
-            ${ci('Trade references provided',v.Ref1)}
+            ${ci('Trade references provided',v._x0052_ef1)}
             ${v.Tier!=='Tier 1'?ci('Financial info (Tier 2/3)',v.Revenue||v.DUNS):''}
             ${v.Tier==='Tier 3'?ci('Bonding capacity (Tier 3)',v.BondCapacity):''}
         </div>
-        ${v.Ref1?`<div class="dp-section"><h4>References</h4><div style="font-size:13px;">${v.Ref1?`<div style="padding:4px 0;">${esc(v.Ref1)}</div>`:''}${v.Ref2?`<div style="padding:4px 0;">${esc(v.Ref2)}</div>`:''}${v.Ref3?`<div style="padding:4px 0;">${esc(v.Ref3)}</div>`:''}</div></div>`:''}
+        ${v._x0052_ef1?`<div class="dp-section"><h4>References</h4><div style="font-size:13px;">${v._x0052_ef1?`<div style="padding:4px 0;">${esc(v._x0052_ef1)}</div>`:''}${v._x0052_ef2?`<div style="padding:4px 0;">${esc(v._x0052_ef2)}</div>`:''}${v._x0052_ef3?`<div style="padding:4px 0;">${esc(v._x0052_ef3)}</div>`:''}</div></div>`:''}
         ${v.Notes?`<div class="dp-section"><h4>Vendor Notes</h4><p style="font-size:13px;">${esc(v.Notes)}</p></div>`:''}
         <div class="dp-section"><h4>AI Assessment</h4>
             ${v.AIScore ? `
@@ -1146,9 +1147,9 @@ OSHA Incidents: ${v.OSHA_Incidents !== undefined ? v.OSHA_Incidents : 'Not provi
     sections += `
 
 REFERENCES:
-Ref 1: ${v.Ref1 || 'None'}
-Ref 2: ${v.Ref2 || 'None'}
-Ref 3: ${v.Ref3 || 'None'}
+Ref 1: ${v._x0052_ef1 || 'None'}
+Ref 2: ${v._x0052_ef2 || 'None'}
+Ref 3: ${v._x0052_ef3 || 'None'}
 Notes: ${v.Notes || 'None'}`;
 
     const scoringCriteria = isSub ?
