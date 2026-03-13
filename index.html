@@ -271,6 +271,7 @@
                             <th>Contact</th>
                             <th>Phone</th>
                             <th>Email</th>
+                            <th>Address</th>
                             <th onclick="sortTable('VendorType')">Type <span class="sort-arrow" id="sort-VendorType"></span></th>
                             <th onclick="sortTable('Tier')">Tier <span class="sort-arrow" id="sort-Tier"></span></th>
                             <th onclick="sortTable('Entity')">Entity <span class="sort-arrow" id="sort-Entity"></span></th>
@@ -821,7 +822,7 @@ async function submitPrequal(){
     const refs=[];document.querySelectorAll('.ref-row').forEach(r=>{const c=r.querySelector('.ref-company').value.trim(),n=r.querySelector('.ref-contact').value.trim(),p=r.querySelector('.ref-phone').value.trim();if(c)refs.push(`${c} | ${n} | ${p}`);});
     const isSub=vt==='Subcontractor';
     const fields={
-        Title:cn, field_1:co, DBA:val('f_dba'), ContactTitle:val('f_contactTitle'), VendorEmail:em, field_5:ph,
+        Title:cn, field_1:co, DBA:val('f_dba'), ContactTitle:val('f_contactTitle'), VendorEmail:em, field_4:ph,
         field_2:val('f_address'), VendorType:vt, YearEstablished:numVal('f_yearsInBusiness'),
         ServiceRegion:val('f_serviceRegion'), Website:val('f_website'), CoreFunctions:val('f_coreFunctions'),
         Tier:ti, Entity:en, Trades:trades.join(', '),
@@ -877,7 +878,7 @@ async function submitPrequal(){
 
 function applyFilters(){
     const s=document.getElementById('filterSearch').value.toLowerCase(),st=document.getElementById('filterStatus').value,ti=document.getElementById('filterTier').value,en=document.getElementById('filterEntity').value,vt=document.getElementById('filterType').value;
-    filteredVendors=vendors.filter(v=>{if(st&&v.Status!==st)return false;if(ti&&v.Tier!==ti)return false;if(en&&v.Entity!==en)return false;if(vt&&v.VendorType!==vt)return false;if(s){const h=[v.Title,v.Trades,v.field_1,v.VendorEmail,v.Entity,v.VendorType,v.field_5].join(' ').toLowerCase();if(!h.includes(s))return false;}return true;});
+    filteredVendors=vendors.filter(v=>{if(st&&v.Status!==st)return false;if(ti&&v.Tier!==ti)return false;if(en&&v.Entity!==en)return false;if(vt&&v.VendorType!==vt)return false;if(s){const h=[v.Title,v.Trades,v.field_1,v.VendorEmail,v.Entity,v.VendorType,v.field_4].join(' ').toLowerCase();if(!h.includes(s))return false;}return true;});
     filteredVendors.sort((a,b)=>{let av=a[sortCol]||'',bv=b[sortCol]||'';if(typeof av==='string')av=av.toLowerCase();if(typeof bv==='string')bv=bv.toLowerCase();if(av<bv)return sortDir==='asc'?-1:1;if(av>bv)return sortDir==='asc'?1:-1;return 0;});
     renderTable();
 }
@@ -889,8 +890,9 @@ function renderTable(){
     tb.innerHTML=filteredVendors.map(v=>`<tr>
         <td><strong>${esc(v.Title||'')}</strong></td>
         <td style="font-size:12px;">${esc(v.field_1||'—')}</td>
-        <td style="font-size:12px;">${esc(v.field_5||'—')}</td>
+        <td style="font-size:12px;">${esc(v.field_4||'—')}</td>
         <td style="font-size:12px;">${esc(v.VendorEmail||'—')}</td>
+        <td style="font-size:12px;max-width:180px;">${esc(v.field_2||'—')}</td>
         <td style="font-size:11px;font-weight:600;color:${v.VendorType==='Subcontractor'?'var(--navy)':'var(--green-dark)'}">${esc(v.VendorType||'—')}</td>
         <td>${tierBadge(v.Tier)}</td><td>${esc(v.Entity||'')}</td>
         <td>${statusBadge(v.Status)}</td>
@@ -924,7 +926,7 @@ function openDetail(id){
             <div class="dp-field"><label>Name</label><span>${esc(v.field_1||'')}</span></div>
             <div class="dp-field"><label>Title</label><span>${esc(v.ContactTitle||'—')}</span></div>
             <div class="dp-field"><label>Email</label><span>${esc(v.VendorEmail||'')}</span></div>
-            <div class="dp-field"><label>Phone</label><span>${esc(v.field_5||'')}</span></div>
+            <div class="dp-field"><label>Phone</label><span>${esc(v.field_4||'')}</span></div>
             <div class="dp-field" style="grid-column:1/-1"><label>Address</label><span>${esc(v.field_2||'—')}</span></div>
         </div></div>
         <div class="dp-section"><h4>Scope</h4><div class="dp-grid">
