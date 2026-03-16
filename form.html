@@ -3,63 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Prequalification — Distributed Energy</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Vendor Prequalification — Distributed Energy Infrastructure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root{--navy:#375673;--navy-dark:#1a2d42;--green:#779d36;--green-dark:#5f7e2b;--green-light:#8fb844;--bg:#f5f7fa;--card:#fff;--border:#e2e8f0;--text:#1e2a36;--text-muted:#6b7c8a;--red:#c0392b;--radius:8px;--shadow:0 1px 3px rgba(0,0,0,0.04)}
+        :root{--navy:#0c1e2d;--navy-mid:#1a3347;--navy-light:#375673;--green:#779d36;--green-dark:#5f7e2b;--green-light:#8fb844;--bg:#f7f8fa;--card:#ffffff;--border:#e2e8f0;--text:#0c1e2d;--text-muted:#5a6b7a;--red:#c0392b;--radius:4px;--shadow:0 1px 3px rgba(0,0,0,0.06)}
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
-        .top-bar{background:linear-gradient(135deg,var(--navy-dark),var(--navy));padding:20px 24px;text-align:center;color:#fff}
-        .top-bar h1{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;letter-spacing:1px}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:14px}
+        .top-bar{background:var(--navy);padding:0;color:#fff}
+        .top-bar-inner{max-width:860px;margin:0 auto;padding:32px 24px 28px;text-align:left}
+        .top-bar-logo{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+        .top-bar-logo svg{width:40px;height:40px}
+        .top-bar-logo span{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.5)}
+        .top-bar h1{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;letter-spacing:.5px;color:#fff}
         .top-bar h1 span{color:var(--green-light)}
-        .top-bar p{font-size:13px;opacity:.7;margin-top:4px}
-        .container{max-width:860px;margin:0 auto;padding:24px 16px 60px}
-        .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px}
-        .card-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .top-bar p{font-size:13px;color:rgba(255,255,255,0.45);margin-top:6px;font-weight:300;letter-spacing:.3px}
+        .top-bar-line{height:3px;background:linear-gradient(90deg,var(--green),var(--green-light),transparent);margin-top:16px;border-radius:2px;width:120px}
+        .container{max-width:860px;margin:0 auto;padding:28px 16px 60px}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;margin-bottom:16px}
+        .card-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--border)}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
         .form-grid.three{grid-template-columns:1fr 1fr 1fr}
-        .form-group{display:flex;flex-direction:column;gap:4px}
+        .form-group{display:flex;flex-direction:column;gap:5px}
         .form-group.full{grid-column:1/-1}
-        .form-group label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+        .form-group label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px}
         .form-group label .req{color:var(--red)}
-        .form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;color:var(--text);background:#fff;transition:border-color .2s}
-        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 2px rgba(119,157,54,.12)}
+        .form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'Inter',sans-serif;color:var(--text);background:#fff;transition:all .2s}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--navy-light);box-shadow:0 0 0 3px rgba(55,86,115,.08)}
         .form-group textarea{resize:vertical;min-height:80px}
-        .checkbox-group{display:flex;flex-wrap:wrap;gap:12px;padding:4px 0}
-        .checkbox-group label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer}
-        .checkbox-group input[type="checkbox"]{width:16px;height:16px;accent-color:var(--green)}
+        .checkbox-group{display:flex;flex-wrap:wrap;gap:10px;padding:4px 0}
+        .checkbox-group label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer}
+        .checkbox-group input[type="checkbox"]{width:15px;height:15px;accent-color:var(--navy)}
         .section-vendor,.section-sub{display:none}
-        .btn-row{display:flex;gap:12px;justify-content:center;margin-top:24px}
-        .btn{padding:12px 36px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase}
-        .btn-primary{background:var(--green);color:#fff}
-        .btn-primary:hover{background:var(--green-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
-        .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-        .error-banner{background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);border-radius:6px;padding:10px 16px;font-size:13px;color:var(--red);margin-bottom:16px;display:none}
+        .btn-row{display:flex;gap:12px;justify-content:center;margin-top:28px}
+        .btn{padding:14px 40px;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .2s;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;text-transform:uppercase}
+        .btn-primary{background:var(--navy);color:#fff}
+        .btn-primary:hover{background:var(--navy-mid);box-shadow:0 4px 16px rgba(12,30,45,.2)}
+        .btn:disabled{opacity:.5;cursor:not-allowed}
+        .error-banner{background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.15);border-radius:var(--radius);padding:12px 16px;font-size:13px;color:var(--red);margin-bottom:16px;display:none}
         .error-banner.show{display:block}
         .success-screen{display:none;text-align:center;padding:60px 20px}
         .success-screen.show{display:block}
-        .success-screen .check-circle{width:80px;height:80px;border-radius:50%;background:rgba(119,157,54,.1);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+        .success-screen .check-circle{width:80px;height:80px;border-radius:50%;background:rgba(119,157,54,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
         .success-screen .check-circle svg{width:40px;height:40px;color:var(--green)}
-        .success-screen h2{font-family:'Barlow Condensed',sans-serif;font-size:24px;color:var(--navy)}
+        .success-screen h2{font-family:'Barlow Condensed',sans-serif;font-size:26px;color:var(--navy);font-weight:700}
         .success-screen p{font-size:14px;color:var(--text-muted);margin-top:8px;max-width:480px;margin-left:auto;margin-right:auto}
         .conditional{display:none}
         .conditional.show{display:block;margin-top:12px}
-        .file-upload{border:2px dashed var(--border);border-radius:6px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s}
-        .file-upload:hover{border-color:var(--green)}
+        .file-upload{border:2px dashed var(--border);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+        .file-upload:hover{border-color:var(--navy-light);background:#fff}
         .file-upload input{display:none}
-        .file-upload .file-label{font-size:13px;color:var(--text-muted)}
-        .file-upload .file-name{font-size:12px;color:var(--green-dark);font-weight:600;margin-top:4px}
-        .file-upload .file-icon{font-size:24px;margin-bottom:4px}
-        .nda-download{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;transition:all .2s;margin-bottom:16px}
-        .nda-download:hover{background:var(--navy-dark);transform:translateY(-1px)}
-        .nda-download svg{width:18px;height:18px}
-        .contact-block{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px}
-        .contact-block-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+        .file-upload .file-label{font-size:12px;color:var(--text-muted)}
+        .file-upload .file-name{font-size:11px;color:var(--green-dark);font-weight:600;margin-top:4px}
+        .file-upload .file-icon{font-size:22px;margin-bottom:4px}
+        .nda-download{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;padding:10px 20px;border-radius:var(--radius);text-decoration:none;font-size:12px;font-weight:600;transition:all .2s;margin-bottom:16px;letter-spacing:.3px}
+        .nda-download:hover{background:var(--navy-mid)}
+        .nda-download svg{width:16px;height:16px}
+        .contact-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px}
+        .contact-block-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+        .footer-bar{background:var(--navy);padding:16px 24px;text-align:center;color:rgba(255,255,255,0.3);font-size:11px;margin-top:0}
         @media(max-width:640px){.form-grid,.form-grid.three{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
-<div class="top-bar"><h1>DISTRIBUTED <span>ENERGY</span></h1><p>Vendor Prequalification Application</p></div>
+<div class="top-bar">
+    <div class="top-bar-inner">
+        <div class="top-bar-logo">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5L93.3 27.5V72.5L50 95L6.7 72.5V27.5L50 5Z" stroke="#375673" stroke-width="8" fill="none"/>
+                <path d="M6.7 72.5L50 50L50 5L6.7 27.5V72.5Z" fill="#769d36"/>
+            </svg>
+            <span>Distributed Energy Infrastructure</span>
+        </div>
+        <h1>Vendor <span>Prequalification</span></h1>
+        <p>Complete all required fields to begin the vendor qualification process.</p>
+        <div class="top-bar-line"></div>
+    </div>
+</div>
 <div class="container" id="formContainer">
     <div class="error-banner" id="errorBanner"></div>
 
@@ -274,7 +293,10 @@
     <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
     <h2>Application Submitted</h2>
     <p>Your prequalification application has been received. Our team will review and contact you within 3–5 business days.</p>
+    <p style="margin-top:16px;font-size:12px;color:var(--text-muted);">Questions? Contact us at <a href="mailto:procurement@distributedei.com" style="color:var(--navy);">procurement@distributedei.com</a></p>
 </div>
+
+<div class="footer-bar">© 2026 Distributed Energy Infrastructure | 416 SE Balboa Ave, Stuart, FL 34994 | <a href="https://www.distributedei.com" style="color:rgba(255,255,255,0.5);text-decoration:none;">distributedei.com</a></div>
 
 <script>
 const WEBHOOK_URL='https://defaultec357a325b85438da765ae33c8eb13.b7.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/809579ee018146c0b7bf30b1fc1f3465/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z_oVZah2JwcyDtWSaZWQtsjNtJhcTL48h3lbEeaSCPo';
