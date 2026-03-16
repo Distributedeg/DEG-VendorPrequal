@@ -69,7 +69,7 @@
             <div class="form-group"><label>Title</label><input type="text" id="f_contactTitle" placeholder="e.g. VP Operations"></div>
             <div class="form-group"><label>Email <span class="req">*</span></label><input type="email" id="f_email" placeholder="email@company.com"></div>
             <div class="form-group"><label>Phone <span class="req">*</span></label><input type="tel" id="f_phone" placeholder="(555) 555-5555"></div>
-            <div class="form-group full"><label>Address</label><input type="text" id="f_address" placeholder="Street, City, State, ZIP"></div>
+            <div class="form-group full"><label>Address <span class="req">*</span></label><input type="text" id="f_address" placeholder="Street, City, State, ZIP"></div>
         </div>
         <div class="form-grid" style="margin-top:16px">
             <div class="form-group"><label>Expected Contract Value <span class="req">*</span></label><select id="f_tier"><option value="">Select tier...</option><option value="Tier 1">Tier 1 — Under $100K</option><option value="Tier 2">Tier 2 — $100K – $500K</option><option value="Tier 3">Tier 3 — Over $500K</option></select></div>
@@ -82,17 +82,17 @@
 
     <div class="card"><div class="card-title">1. Financial Stability</div>
         <div class="form-grid">
-            <div class="form-group"><label>Federal Tax ID (EIN)</label><input type="text" id="f_ein" placeholder="XX-XXXXXXX"></div>
+            <div class="form-group"><label>Federal Tax ID (EIN) <span class="req">*</span></label><input type="text" id="f_ein" placeholder="XX-XXXXXXX"></div>
             <div class="form-group"><label>Annual Revenue</label><input type="text" id="f_revenue" placeholder="e.g. $5,000,000"></div>
             <div class="form-group"><label>Audited Financials</label><select id="f_auditedFinancials"><option value="">Select...</option><option value="Yes - 3yr">Yes — 3 Years</option><option value="Partial">Partial</option><option value="No">No</option></select></div>
             <div class="form-group"><label>D&amp;B / DUNS Number</label><input type="text" id="f_duns"></div>
         </div>
         <div class="form-grid three" style="margin-top:16px">
-            <div class="form-group"><label>GL Limit</label><input type="text" id="f_glLimit" placeholder="e.g. $2,000,000"></div>
+            <div class="form-group"><label>GL Limit <span class="req">*</span></label><input type="text" id="f_glLimit" placeholder="e.g. $2,000,000"></div>
             <div class="form-group"><label>Professional Liability</label><input type="text" id="f_profLiability" placeholder="e.g. $1,000,000"></div>
             <div class="form-group"><label>Bonding Capacity</label><input type="text" id="f_bondCapacity"></div>
-            <div class="form-group"><label>WC Carrier</label><input type="text" id="f_wcCarrier"></div>
-            <div class="form-group"><label>COI Expiry</label><input type="date" id="f_coiExpiry"></div>
+            <div class="form-group"><label>WC Carrier <span class="req">*</span></label><input type="text" id="f_wcCarrier"></div>
+            <div class="form-group"><label>COI Expiry <span class="req">*</span></label><input type="date" id="f_coiExpiry"></div>
             <div class="form-group"><label>Bank Reference</label><input type="text" id="f_bankRef"></div>
         </div>
     </div>
@@ -121,7 +121,7 @@
 
     <div class="card"><div class="card-title">6. Staffing Turnover</div><div class="form-grid"><div class="form-group"><label>Turnover Rate</label><select id="f_turnover"><option value="">Select...</option><option value="<10%">&lt;10%</option><option value="10-20%">10-20%</option><option value="20-40%">20-40%</option><option value=">40%">&gt;40%</option><option value="Unknown">Unknown</option></select></div></div></div>
 
-    <div class="card section-sub"><div class="card-title">7. Safety Incidents (3yr)</div><div class="form-grid"><div class="form-group"><label>Total Recordable</label><select id="f_safetyIncidents"><option value="">Select...</option><option value="0-2">0-2</option><option value="3-4">3-4</option><option value="5+">5+</option><option value="Not tracked">Not tracked</option></select></div><div class="form-group"><label>Safety Program?</label><select id="f_safetyProgram"><option value="">Select...</option><option value="Yes">Yes</option><option value="No">No</option></select></div><div class="form-group"><label>OSHA Incidents (3yr)</label><input type="number" id="f_oshaIncidents" placeholder="0"></div><div class="form-group"><label>Safety Personnel</label><select id="f_safetyPersonnel"><option value="">Select...</option><option value="Dedicated Safety Supervisor">Dedicated Supervisor</option><option value="OSHA 30">OSHA 30</option><option value="OSHA 10">OSHA 10</option><option value="None">None</option></select></div></div><div class="form-grid three" style="margin-top:16px"><div class="form-group"><label>EMR Current</label><input type="text" id="f_emrCurrent" placeholder="0.85"></div><div class="form-group"><label>EMR Prior</label><input type="text" id="f_emrPrior" placeholder="0.90"></div><div class="form-group"><label>EMR 2yr Prior</label><input type="text" id="f_emr2Prior" placeholder="0.92"></div></div></div>
+    <div class="card section-sub"><div class="card-title">7. Safety Incidents (3yr)</div><div class="form-grid"><div class="form-group"><label>Total Recordable</label><select id="f_safetyIncidents"><option value="">Select...</option><option value="0-2">0-2</option><option value="3-4">3-4</option><option value="5+">5+</option><option value="Not tracked">Not tracked</option></select></div><div class="form-group"><label>Safety Program? <span class="req">*</span></label><select id="f_safetyProgram"><option value="">Select...</option><option value="Yes">Yes</option><option value="No">No</option></select></div><div class="form-group"><label>OSHA Incidents (3yr)</label><input type="number" id="f_oshaIncidents" placeholder="0"></div><div class="form-group"><label>Safety Personnel</label><select id="f_safetyPersonnel"><option value="">Select...</option><option value="Dedicated Safety Supervisor">Dedicated Supervisor</option><option value="OSHA 30">OSHA 30</option><option value="OSHA 10">OSHA 10</option><option value="None">None</option></select></div></div><div class="form-grid three" style="margin-top:16px"><div class="form-group"><label>EMR Current <span class="req">*</span></label><input type="text" id="f_emrCurrent" placeholder="0.85"></div><div class="form-group"><label>EMR Prior</label><input type="text" id="f_emrPrior" placeholder="0.90"></div><div class="form-group"><label>EMR 2yr Prior</label><input type="text" id="f_emr2Prior" placeholder="0.92"></div></div></div>
 
     <div class="card section-sub"><div class="card-title">8. TRIR</div><div class="form-grid"><div class="form-group"><label>TRIR Range</label><select id="f_trir"><option value="">Select...</option><option value="0-1.5">0-1.5 (Excellent)</option><option value="1.6-3.1">1.6-3.1 (Acceptable)</option><option value="3.2+">3.2+ (High Risk)</option><option value="Not tracked">Not tracked</option></select></div></div></div>
 
@@ -133,7 +133,7 @@
 
     <div class="card section-sub"><div class="card-title">10. Project Experience (MW)</div><div class="form-grid"><div class="form-group"><label>Total MW Installed</label><select id="f_mwInstalled"><option value="">Select...</option><option value=">501 MW">&gt;501 MW</option><option value="301-500 MW">301-500 MW</option><option value="101-300 MW">101-300 MW</option><option value="<100 MW">&lt;100 MW</option></select></div><div class="form-group"><label>Largest Project</label><input type="text" id="f_largestProject" placeholder="e.g. 150 MW"></div><div class="form-group"><label>Supervisor Availability</label><select id="f_supervisorAvail"><option value="">Select...</option><option value="On-site full time">On-site full time</option><option value="Intermittent">Intermittent</option><option value="Remote">Remote</option></select></div><div class="form-group"><label>Operating Distance</label><select id="f_operatingDistance"><option value="">Select...</option><option value="<50 miles">&lt;50 mi</option><option value="50-100 miles">50-100 mi</option><option value="100-200 miles">100-200 mi</option><option value=">200 miles">&gt;200 mi</option></select></div></div></div>
 
-    <div class="card section-vendor"><div class="card-title">Safety &amp; Compliance</div><div class="form-grid three"><div class="form-group"><label>EMR Current</label><input type="text" id="f_emrCurrentV" placeholder="0.85"></div><div class="form-group"><label>EMR Prior</label><input type="text" id="f_emrPriorV" placeholder="0.90"></div><div class="form-group"><label>EMR 2yr Prior</label><input type="text" id="f_emr2PriorV" placeholder="0.92"></div></div><div class="form-grid" style="margin-top:16px"><div class="form-group"><label>Safety Program?</label><select id="f_safetyProgramV"><option value="">Select...</option><option value="Yes">Yes</option><option value="No">No</option></select></div><div class="form-group"><label>OSHA Incidents (3yr)</label><input type="number" id="f_oshaIncidentsV" placeholder="0"></div></div></div>
+    <div class="card section-vendor"><div class="card-title">Safety &amp; Compliance</div><div class="form-grid three"><div class="form-group"><label>EMR Current <span class="req">*</span></label><input type="text" id="f_emrCurrentV" placeholder="0.85"></div><div class="form-group"><label>EMR Prior</label><input type="text" id="f_emrPriorV" placeholder="0.90"></div><div class="form-group"><label>EMR 2yr Prior</label><input type="text" id="f_emr2PriorV" placeholder="0.92"></div></div><div class="form-grid" style="margin-top:16px"><div class="form-group"><label>Safety Program? <span class="req">*</span></label><select id="f_safetyProgramV"><option value="">Select...</option><option value="Yes">Yes</option><option value="No">No</option></select></div><div class="form-group"><label>OSHA Incidents (3yr)</label><input type="number" id="f_oshaIncidentsV" placeholder="0"></div></div></div>
 
     <div class="card"><div class="card-title">References</div>
         <div class="form-grid three ref-row"><div class="form-group"><label>Ref 1 — Company</label><input type="text" class="ref-company"></div><div class="form-group"><label>Contact</label><input type="text" class="ref-contact"></div><div class="form-group"><label>Phone/Email</label><input type="text" class="ref-phone"></div></div>
@@ -161,13 +161,43 @@ function gc(id){const v=[];document.querySelectorAll(`#${id} input:checked`).for
 
 async function submitForm(){
     const vt=val('f_vendorType'),cn=val('f_companyName'),co=val('f_contact'),em=val('f_email'),ph=val('f_phone'),ti=val('f_tier'),en=val('f_entity');
-    if(!vt){showError('Select Vendor or Subcontractor.');return;}
-    if(!cn||!co||!em||!ph||!ti||!en){showError('Fill all required fields.');return;}
-    if(!gc('f_trades')){showError('Select at least one trade.');return;}
-    if(!gc('f_states')){showError('Select at least one state.');return;}
-    if(!val('f_coreFunctions')){showError('Describe your core functions.');return;}
+    const isSub=vt==='Subcontractor';
 
+    // Core required fields
+    if(!vt){showError('Select Vendor or Subcontractor.');return;}
+    if(!en){showError('Select a DEG Entity.');return;}
+    if(!cn){showError('Enter company name.');return;}
+    if(!co){showError('Enter primary contact name.');return;}
+    if(!em){showError('Enter email address.');return;}
+    if(!em.includes('@')){showError('Enter a valid email address.');return;}
+    if(!ph){showError('Enter phone number.');return;}
+    if(!val('f_address')){showError('Enter company address.');return;}
+    if(!val('f_coreFunctions')){showError('Describe your core functions.');return;}
+    if(!ti){showError('Select expected contract value tier.');return;}
+    if(!gc('f_trades')){showError('Select at least one trade/scope.');return;}
+    if(!gc('f_states')){showError('Select at least one state for service region.');return;}
+
+    // Financial required
+    if(!val('f_ein')){showError('Enter Federal Tax ID (EIN).');return;}
+    if(!val('f_glLimit')){showError('Enter General Liability limit.');return;}
+    if(!val('f_wcCarrier')){showError('Enter Workers Comp carrier.');return;}
+    if(!val('f_coiExpiry')){showError('Enter COI expiration date.');return;}
+
+    // Safety required for subcontractors
+    if(isSub){
+        if(!val('f_emrCurrent')){showError('Enter current year EMR.');return;}
+        if(!val('f_safetyProgram')){showError('Indicate if you have a written safety program.');return;}
+    }
+
+    // Safety required for vendors
+    if(!isSub){
+        if(!val('f_emrCurrentV')){showError('Enter current year EMR.');return;}
+        if(!val('f_safetyProgramV')){showError('Indicate if you have a written safety program.');return;}
+    }
+
+    // References - require at least 2
     const refs=[];document.querySelectorAll('.ref-row').forEach(r=>{const c=r.querySelector('.ref-company').value.trim(),n=r.querySelector('.ref-contact').value.trim(),p=r.querySelector('.ref-phone').value.trim();if(c)refs.push(`${c} | ${n} | ${p}`);});
+    if(refs.length<2){showError('Provide at least 2 trade references with company name, contact, and phone/email.');return;}
 
     const isSub=vt==='Subcontractor';
     const p={
@@ -178,7 +208,7 @@ async function submitForm(){
         EIN:val('f_ein'),Revenue:val('f_revenue'),
         AuditedFinancials:val('f_auditedFinancials'),DUNS:val('f_duns'),GL_Limit:val('f_glLimit'),
         ProfLiability:val('f_profLiability'),BondCapacity:val('f_bondCapacity'),WC_Carrier:val('f_wcCarrier'),
-        COI_Expiry:val('f_coiExpiry')||'',BankRef:val('f_bankRef'),
+        COI_Expiry:val('f_coiExpiry')||null,BankRef:val('f_bankRef'),
         ResponseTime:val('f_responseTime'),EmergencyResponse:val('f_emergencyResponse'),
         SupportChannels:gc('f_supportChannels'),SLAs:val('f_slas'),EscalationProcess:val('f_escalation'),
         TrainingSupport:val('f_trainingSupport'),TechExpertise:val('f_techExpertise'),
