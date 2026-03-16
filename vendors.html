@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor & Subcontractor Portal — Distributed Energy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{--navy:#0c1e2d;--navy-mid:#1a3347;--navy-light:#375673;--green:#779d36;--green-dark:#5f7e2b;--green-light:#8fb844;--bg:#f7f8fa;--card:#ffffff;--border:#e2e8f0;--text:#0c1e2d;--text-muted:#5a6b7a;--radius:4px;--shadow:0 1px 3px rgba(0,0,0,0.06)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:14px;overflow-x:hidden}
+
+        .floating-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+        .hex{position:absolute;opacity:0.03;animation:drift linear infinite}
+        .hex img{width:100%;height:100%}
+        @keyframes drift{0%{transform:translate(0,0) rotate(0deg)}20%{transform:translate(25px,-35px) rotate(6deg)}40%{transform:translate(-15px,-70px) rotate(-4deg)}60%{transform:translate(35px,-50px) rotate(8deg)}80%{transform:translate(-10px,-20px) rotate(-3deg)}100%{transform:translate(0,0) rotate(0deg)}}
+
+        .page{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:0 16px}
+
+        /* Header */
+        .header{padding:28px 0 0;display:flex;align-items:center;justify-content:space-between}
+        .header-left{display:flex;align-items:center;gap:10px}
+        .header-left img.icon{width:32px;height:32px;object-fit:contain}
+        .header-left img.wordmark{height:16px;object-fit:contain}
+        .header-back{text-decoration:none;color:var(--text-muted);font-size:12px;font-weight:500;display:flex;align-items:center;gap:4px;transition:color 0.2s}
+        .header-back:hover{color:var(--navy)}
+        .header-back svg{width:14px;height:14px}
+
+        /* Hero */
+        .hero{padding:48px 0 40px;text-align:center}
+        .hero-badge{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green);background:rgba(119,157,54,0.08);padding:6px 16px;border-radius:20px;margin-bottom:20px}
+        .hero h1{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;color:var(--navy);line-height:1.15;margin-bottom:12px}
+        .hero p{font-size:15px;color:var(--text-muted);max-width:560px;margin:0 auto;line-height:1.7}
+
+        /* Process steps */
+        .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:0 0 40px}
+        .step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;text-align:center;position:relative}
+        .step-num{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color:rgba(55,86,115,0.08);position:absolute;top:12px;right:16px}
+        .step-icon{width:44px;height:44px;border-radius:10px;background:rgba(55,86,115,0.06);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+        .step-icon svg{width:20px;height:20px;color:var(--navy-light)}
+        .step h3{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+        .step p{font-size:12px;color:var(--text-muted);line-height:1.5}
+
+        /* Checklist */
+        .checklist{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:24px}
+        .checklist-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--border)}
+        .checklist-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .checklist-item{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text);padding:6px 0}
+        .checklist-item .check{color:var(--green);font-size:15px;flex-shrink:0;margin-top:1px}
+        .checklist-item span{line-height:1.4}
+
+        /* Info boxes */
+        .info-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+        .info-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+        .info-box h4{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+        .info-box p{font-size:12px;color:var(--text-muted);line-height:1.6}
+        .info-box a{color:var(--navy-light);text-decoration:none;font-weight:600}
+        .info-box a:hover{text-decoration:underline}
+
+        /* CTA */
+        .cta-section{text-align:center;padding:20px 0 60px}
+        .cta-btn{display:inline-flex;align-items:center;gap:10px;text-decoration:none;background:var(--navy);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:18px 48px;border-radius:var(--radius);transition:all 0.3s;position:relative;overflow:hidden}
+        .cta-btn::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,var(--navy-mid),var(--navy));opacity:0;transition:opacity 0.3s}
+        .cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(12,30,45,0.2)}
+        .cta-btn:hover::before{opacity:1}
+        .cta-btn span{position:relative;z-index:1}
+        .cta-btn svg{position:relative;z-index:1;width:18px;height:18px;transition:transform 0.3s}
+        .cta-btn:hover svg{transform:translateX(3px)}
+        .cta-sub{font-size:12px;color:var(--text-muted);margin-top:12px}
+
+        /* NDA callout */
+        .nda-callout{background:rgba(119,157,54,0.04);border:1px solid rgba(119,157,54,0.15);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px}
+        .nda-callout svg{width:20px;height:20px;color:var(--green);flex-shrink:0}
+        .nda-callout p{font-size:12px;color:var(--text-muted);line-height:1.5}
+        .nda-callout a{color:var(--navy);font-weight:600;text-decoration:none}
+        .nda-callout a:hover{text-decoration:underline}
+
+        /* Footer */
+        .footer{position:relative;z-index:1;text-align:center;padding:24px;font-size:10px;color:var(--text-muted);opacity:0.5;border-top:1px solid var(--border)}
+        .footer a{color:var(--navy-light);text-decoration:none}
+
+        @media(max-width:640px){
+            .steps{grid-template-columns:1fr}
+            .checklist-grid{grid-template-columns:1fr}
+            .info-row{grid-template-columns:1fr}
+            .hero h1{font-size:28px}
+        }
+    </style>
+</head>
+<body>
+
+<div class="floating-bg">
+    <div class="hex" style="width:150px;top:5%;left:2%;animation-duration:55s"><img src="deg-icon.png"></div>
+    <div class="hex" style="width:120px;top:30%;right:5%;animation-duration:48s;animation-delay:-15s"><img src="dei-icon.png"></div>
+    <div class="hex" style="width:100px;top:60%;left:8%;animation-duration:52s;animation-delay:-25s"><img src="der-icon.png"></div>
+    <div class="hex" style="width:80px;top:80%;right:20%;animation-duration:44s;animation-delay:-35s"><img src="deg-icon.png"></div>
+    <div class="hex" style="width:130px;top:15%;left:65%;animation-duration:50s;animation-delay:-10s"><img src="der-icon.png"></div>
+</div>
+
+<div class="page">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <img src="deg-icon.png" alt="DEG" class="icon">
+            <img src="dei-wordmark.png" alt="Distributed" class="wordmark">
+        </div>
+        <a href="index.html" class="header-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back</a>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-badge">Vendor & Subcontractor Portal</div>
+        <h1>Partner With Distributed Energy</h1>
+        <p>We're building the future of solar and battery storage infrastructure. If you're a subcontractor or vendor looking to work with DEI or DER, start by completing our prequalification process.</p>
+    </div>
+
+    <!-- Process Steps -->
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">01</div>
+            <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6M12 9v6M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <h3>Apply</h3>
+            <p>Complete the prequalification form with your company details, safety record, and capabilities.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">02</div>
+            <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M12 12l2 2 4-4"/></svg></div>
+            <h3>Review</h3>
+            <p>Our procurement team reviews your submission and documentation within 3–5 business days.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">03</div>
+            <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+            <h3>Qualify</h3>
+            <p>Approved vendors are added to our qualified vendor list and eligible for project opportunities.</p>
+        </div>
+    </div>
+
+    <!-- What to prepare -->
+    <div class="checklist">
+        <div class="checklist-title">Have These Ready Before You Start</div>
+        <div class="checklist-grid">
+            <div class="checklist-item"><span class="check">✓</span><span>Federal Tax ID (EIN)</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>General Liability & Workers Comp info</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>Current COI with expiration date</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>EMR (Experience Modification Rate)</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>W-9 document (PDF)</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>Sample insurance certificate (PDF)</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>OSHA 300 logs — past 3 years</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>Two trade references (GC or owner)</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>Executive & operations contact info</span></div>
+            <div class="checklist-item"><span class="check">✓</span><span>Licenses & certifications</span></div>
+        </div>
+    </div>
+
+    <!-- NDA Callout -->
+    <div class="nda-callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <p>If you don't have an executed NDA with Distributed Energy, you'll be able to <a href="DEG-NDA-Template.docx" download>download our NDA template</a> during the application. Please have it signed and ready to upload.</p>
+    </div>
+
+    <!-- Info boxes -->
+    <div class="info-row">
+        <div class="info-box">
+            <h4>What Entities Are We?</h4>
+            <p><strong>DEI</strong> — Distributed Energy Infrastructure provides EPC services for commercial solar and battery storage projects.<br><br><strong>DER</strong> — Distributed Energy Resources provides specialty electrical and solar construction services.</p>
+        </div>
+        <div class="info-box">
+            <h4>Questions?</h4>
+            <p>Contact our procurement team for any questions about the prequalification process.<br><br><a href="mailto:procurement@distributedei.com">procurement@distributedei.com</a><br><a href="tel:+17725551234">(772) 286-5300</a></p>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+        <a href="form.html" class="cta-btn">
+            <span>Start Prequalification</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <div class="cta-sub">No login required · Takes approximately 15–20 minutes</div>
+    </div>
+</div>
+
+<div class="footer">
+    © 2026 Distributed Energy Group · Stuart, Florida · <a href="https://www.distributedei.com">distributedei.com</a>
+</div>
+
+</body>
+</html>
