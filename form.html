@@ -317,7 +317,14 @@
     <div class="check-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
     <h2>Application Submitted</h2>
     <p>Your prequalification application has been received. Our team will review and contact you within 3–5 business days.</p>
-    <p style="margin-top:16px;font-size:12px;color:var(--text-muted);">Questions? Contact us at <a href="mailto:procurement@distributedei.com" style="color:var(--navy);">procurement@distributedei.com</a></p>
+    <p style="margin-top:8px;font-size:12px;color:var(--text-muted);">A reference number has been assigned to your submission. Download your application copy below for your records.</p>
+    <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="generatePDF()" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Application PDF
+        </button>
+    </div>
+    <p style="margin-top:24px;font-size:12px;color:var(--text-muted);">Questions? Contact us at <a href="mailto:procurement@distributedei.com" style="color:var(--navy);">procurement@distributedei.com</a></p>
 </div>
 
 <div class="footer-bar">© 2026 Distributed Energy Infrastructure | 416 SE Balboa Ave, Stuart, FL 34994 | <a href="https://www.distributedei.com" style="color:rgba(255,255,255,0.5);text-decoration:none;">distributedei.com</a></div>
@@ -532,6 +539,9 @@ async function submitForm(){
         });
     }
 
+    // Snapshot payload for PDF generation (exclude raw base64 data to keep it lean)
+    captureSnapshot({...p, attachments: attachments.map(a=>({label:a.label, name:a.name, mimeType:a.mimeType}))});
+
     const body=JSON.stringify(p);
     console.log('Submitting — attachments:',attachments.length,'payload bytes:',body.length);
 
@@ -549,6 +559,238 @@ async function submitForm(){
 
 function val(id){return document.getElementById(id)?.value?.trim()||'';}
 function showError(m){const e=document.getElementById('errorBanner');e.textContent=m;e.classList.add('show');window.scrollTo({top:0,behavior:'smooth'});}
+
+// ─── PDF GENERATION ──────────────────────────────────────────────
+// Snapshot of submitted data — populated just before fetch fires
+let _submittedPayload = null;
+
+function captureSnapshot(p){
+    _submittedPayload = p;
+}
+
+function row(label, value){
+    if(!value && value !== 0) return '';
+    return `<tr><td class="lbl">${label}</td><td class="val">${value}</td></tr>`;
+}
+
+function section(title, rows){
+    const content = rows.filter(Boolean).join('');
+    if(!content) return '';
+    return `
+        <div class="section">
+            <div class="section-title">${title}</div>
+            <table>${content}</table>
+        </div>`;
+}
+
+function generatePDF(){
+    const p = _submittedPayload;
+    if(!p){ alert('No submission data found. Please resubmit the form.'); return; }
+
+    const refNum = 'DEG-' + new Date().getFullYear() + '-' + Math.random().toString(36).substr(2,6).toUpperCase();
+    const submittedDate = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    const isSub = p.VendorType === 'Subcontractor';
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>DEG Vendor Prequalification — ${p.Title}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;font-size:11px;color:#0c1e2d;background:#fff;line-height:1.5}
+  .header{background:#0c1e2d;color:#fff;padding:28px 36px;position:relative;overflow:hidden}
+  .header::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#779d36,#8fb844,transparent)}
+  .header-top{display:flex;justify-content:space-between;align-items:flex-start}
+  .header h1{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;letter-spacing:.5px}
+  .header h1 span{color:#8fb844}
+  .header-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;letter-spacing:.3px}
+  .ref-block{text-align:right}
+  .ref-block .ref-num{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#8fb844;letter-spacing:1px}
+  .ref-block .ref-date{font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px}
+  .status-bar{background:#779d36;color:#fff;padding:8px 36px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;display:flex;justify-content:space-between}
+  .body{padding:24px 36px}
+  .section{margin-bottom:18px;break-inside:avoid}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#375673;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1.5px solid #e2e8f0;padding-bottom:5px;margin-bottom:8px}
+  table{width:100%;border-collapse:collapse}
+  td{padding:4px 6px;vertical-align:top;border-bottom:1px solid #f1f4f8}
+  td.lbl{width:38%;font-weight:600;color:#5a6b7a;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+  td.val{color:#0c1e2d;font-size:11px}
+  .files-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .file-pill{background:#f1f4f8;border:1px solid #e2e8f0;border-radius:3px;padding:3px 8px;font-size:10px;color:#375673;font-weight:600}
+  .footer{margin-top:24px;border-top:1px solid #e2e8f0;padding-top:12px;display:flex;justify-content:space-between;color:#5a6b7a;font-size:9px}
+  .notice{background:#f7f8fa;border:1px solid #e2e8f0;border-left:3px solid #779d36;padding:10px 14px;font-size:10px;color:#5a6b7a;margin-bottom:18px;line-height:1.6}
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .status-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>Vendor <span>Prequalification</span></h1>
+      <div class="header-sub">DISTRIBUTED ENERGY GROUP — CONFIDENTIAL SUBMISSION</div>
+    </div>
+    <div class="ref-block">
+      <div class="ref-num">${refNum}</div>
+      <div class="ref-date">Submitted ${submittedDate}</div>
+    </div>
+  </div>
+</div>
+<div class="status-bar">
+  <span>Status: Pending Review</span>
+  <span>Entity: ${p.Entity || '—'}</span>
+  <span>Type: ${p.VendorType || '—'}</span>
+  <span>Tier: ${p.Tier || '—'}</span>
+</div>
+
+<div class="body">
+
+  <div class="notice">
+    This document is a copy of your prequalification application submitted to Distributed Energy Group. 
+    Please retain for your records. Reference number <strong>${refNum}</strong> will be used in all correspondence. 
+    Our team will review your application and respond within 3–5 business days.
+  </div>
+
+  ${section('Company Information', [
+    row('Legal Company Name', p.Title),
+    row('DBA / Trade Name', p.DBA),
+    row('Year Established', p.YearEstablished || ''),
+    row('Website', p.Website),
+    row('Core Functions', p.CoreFunctions),
+    row('Home Office Address', p.Address1),
+  ])}
+
+  ${section('Company Contacts', [
+    row('Executive — Name', p.ExecName),
+    row('Executive — Email', p.ExecEmail),
+    row('Executive — Phone', p.ExecPhone),
+    row('Operations — Name', p.OpsName),
+    row('Operations — Email', p.OpsEmail),
+    row('Operations — Phone', p.OpsPhone),
+    p.SalesName ? row('Sales — Name', p.SalesName) : '',
+    p.SalesEmail ? row('Sales — Email', p.SalesEmail) : '',
+    p.SalesPhone ? row('Sales — Phone', p.SalesPhone) : '',
+  ])}
+
+  ${section('Scope & Classification', [
+    row('Contract Value Tier', p.Tier),
+    row('Trade / Scope of Work', p.Trades),
+    row('Service Region', p.ServiceRegion),
+    row('Licenses / Certifications', p.Licenses),
+    row('OEM Certifications', p.OEMCerts),
+  ])}
+
+  ${section('Non-Disclosure Agreement', [
+    row('Executed NDA on File', p.NDAStatus),
+    p.NDADate ? row('NDA Execution Date', p.NDADate) : '',
+  ])}
+
+  ${section('Financial Stability', [
+    row('Federal Tax ID (EIN)', p.EIN),
+    row('Annual Revenue', p.Revenue),
+    row('D&B / DUNS Number', p.DUNS),
+    row('Audited Financials Available', p.AuditedFinancials),
+    row('General Liability Limit', p.GL_Limit),
+    row('Professional Liability', p.ProfLiability),
+    row('Bonding Capacity', p.BondCapacity),
+    row('Workers Comp Carrier', p.WC_Carrier),
+    row('COI Expiration Date', p.COI_Expiry),
+    row('Banking Reference', p.BankRef),
+  ])}
+
+  ${section('Legal & Compliance', [
+    row('Legal Issues / Defaults (7yr)', p.LegalIssues),
+    p.LegalDetails ? row('Details', p.LegalDetails) : '',
+  ])}
+
+  ${section('Safety & EMR', [
+    row('EMR — Current Year', p.EMR_Current),
+    row('EMR — Prior Year', p.EMR_Prior),
+    row('EMR — 2 Years Prior', p.EMR_2Prior),
+    row('Safety Program', p.SafetyProgram),
+    row('OSHA Incidents (3yr)', p.OSHA_Incidents !== undefined ? p.OSHA_Incidents : ''),
+    isSub ? row('Total Recordable Incidents', p.SafetyIncidents) : '',
+    isSub ? row('Safety Personnel', p.SafetyPersonnel) : '',
+    isSub ? row('TRIR Range', p.TRIR) : '',
+  ])}
+
+  ${isSub ? section('Project Experience', [
+    row('Total MW Installed', p.MWInstalled),
+    row('Largest Single Project', p.LargestProject),
+    row('BESS Experience', p.BESSExperience),
+    row('BESS OEM Experience', p.BESSOEM),
+    row('Supervisor Availability', p.SupervisorAvail),
+    row('Operating Distance', p.OperatingDistance),
+  ]) : ''}
+
+  ${!isSub ? section('Product & Quality', [
+    row('MW Shipped / Deployed', p.MWExperience),
+    row('Reliability Rating', p.Reliability),
+    row('Defect Rate', p.DefectRate),
+    row('Quality Certifications', p.QualityCerts),
+    row('Warranty Duration', p.WarrantyDuration),
+    row('Extended Warranty', p.ExtWarranty),
+    row('Warranty Transferability', p.WarrantyTransfer),
+    row('Service Turnaround', p.WarrantyTurnaround),
+    row('Coverage Scope', p.WarrantyCoverage),
+    row('Exclusions', p.WarrantyExclusions),
+    row('Parts Availability', p.PartsAvail),
+  ]) : ''}
+
+  ${!isSub ? section('Innovation & Value', [
+    row('Continuous Improvement', p.ContImprovement),
+    row('Tech / Automation', p.TechAdvancement),
+    row('R&D', p.RandD),
+    row('Industry Leadership', p.IndustryLeadership),
+    row('Custom Solutions', p.CustomSolutions),
+    row('Cost Optimization', p.CostOptimization),
+  ]) : ''}
+
+  ${section('Staffing', [
+    row('Workforce Composition', p.WorkforceComp),
+    row('Total Crew Size', p.CrewSize || ''),
+    row('Permanent Employees', p.PermanentEmp || ''),
+    row('Partners / Subs', p.PartnerCount || ''),
+  ])}
+
+  ${section('Trade References', [
+    row('Reference 1', p.Ref1),
+    row('Reference 2', p.Ref2),
+    p.Ref3 ? row('Reference 3', p.Ref3) : '',
+  ])}
+
+  ${p.Notes ? section('Additional Notes', [row('Notes', p.Notes)]) : ''}
+
+  <div class="section">
+    <div class="section-title">Documents Submitted</div>
+    <div class="files-list">
+      ${(_submittedPayload.attachments||[]).map(a=>`<span class="file-pill">📄 ${a.label}: ${a.name}</span>`).join('')}
+      ${(_submittedPayload.attachments||[]).length === 0 ? '<span style="color:#5a6b7a;font-size:10px;">No files attached</span>' : ''}
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>© 2026 Distributed Energy Group | 416 SE Balboa Ave, Stuart, FL 34994</span>
+    <span>distributedei.com | procurement@distributedei.com</span>
+    <span>Ref: ${refNum}</span>
+  </div>
+
+</div>
+<script>window.onload=()=>{window.print();}<\/script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+}
+// ─────────────────────────────────────────────────────────────────
 </script>
 </body>
 </html>
