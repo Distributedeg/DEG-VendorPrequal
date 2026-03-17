@@ -1552,6 +1552,13 @@ async function initMap(){
         .attr('pointer-events','none')
         .text(d=> fipsMap[d.id]||'');
 
+    // Debug: log first vendor's ServiceRegion and fipsMap sample
+    if(vendors.length > 0){
+        console.log('Sample ServiceRegion:', vendors[0].ServiceRegion);
+        console.log('FipsMap sample:', Object.entries(fipsMap).slice(0,5));
+        console.log('Topo geometry sample id/props:', us.objects.states.geometries.slice(0,3).map(g=>({id:g.id, props:g.properties})));
+    }
+
     // Trigger initial sidebar + stats
     renderMapSidebar();
     document.getElementById('mapVendorCount').textContent = `${getFilteredVendorsForMap().length} vendor${getFilteredVendorsForMap().length!==1?'s':''} shown`;
