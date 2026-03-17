@@ -1709,10 +1709,23 @@ function resetMapView(){ if(leafletMap) leafletMap.setView([37.8,-96],4); }
 function clearMapFilter(){ renderMapSidebar(); }
 
 function renderMap(){
+    console.log('renderMap called');
+    console.log('L defined:', typeof L !== 'undefined');
+    console.log('leafletMap div:', document.getElementById('leafletMap'));
+    console.log('leafletMap div size:', document.getElementById('leafletMap')?.offsetWidth, 'x', document.getElementById('leafletMap')?.offsetHeight);
+    console.log('vendors:', vendors.length);
+    
+    if(typeof L === 'undefined'){
+        document.getElementById('leafletMap').innerHTML = '<div style="padding:40px;text-align:center;color:red;font-family:sans-serif;"><strong>Leaflet failed to load.</strong><br>Check network tab for blocked CDN requests.</div>';
+        return;
+    }
     initMap();
     if(leafletMap){
+        console.log('invalidateSize + placeMarkers');
         leafletMap.invalidateSize();
-        setTimeout(function(){leafletMap.invalidateSize();placeVendorMarkers();},200);
+        setTimeout(function(){leafletMap.invalidateSize();placeVendorMarkers();},300);
+    } else {
+        console.error('leafletMap is null after initMap');
     }
 }
 
