@@ -1572,7 +1572,7 @@ async function geocodeAddress(addr){
     const k=addr.trim().toLowerCase();
     if(geocodeCache[k]) return geocodeCache[k];
     try{
-        const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q='+encodeURIComponent(addr),{headers:{'Accept-Language':'en-US','User-Agent':'DEG-VendorPrequal/1.0'}});
+        const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q='+encodeURIComponent(addr),{headers:{'Accept-Language':'en-US'}});
         const d=await r.json();
         if(d&&d.length){const res={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};geocodeCache[k]=res;return res;}
     }catch(e){console.warn('Geocode fail:',addr);}
