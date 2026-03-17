@@ -668,7 +668,6 @@
                 <h2>Coverage <span>Map</span></h2>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <span id="mapVendorCount" style="font-size:13px;color:var(--text-muted);"></span>
-                    <button class="btn btn-secondary btn-sm" onclick="resetMapView()">Reset View</button>
                 </div>
             </div>
             <div class="map-controls">
@@ -676,18 +675,27 @@
                 <select id="mapFilterTier" onchange="renderMap()"><option value="">All Tiers</option><option value="Tier 1">Tier 1</option><option value="Tier 2">Tier 2</option><option value="Tier 3">Tier 3</option></select>
                 <select id="mapFilterStatus" onchange="renderMap()"><option value="">All Statuses</option><option value="Approved">Approved</option><option value="Pending">Pending</option><option value="Under Review">Under Review</option></select>
                 <select id="mapFilterEntity" onchange="renderMap()"><option value="">All Entities</option><option value="DEI">DEI</option><option value="DER">DER</option></select>
-                <input type="text" id="mapFilterSearch" placeholder="Search company, trade, city..." oninput="renderMap()" style="width:220px;">
+                <input type="text" id="mapFilterSearch" placeholder="Search company or trade..." oninput="renderMap()" style="width:220px;">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;height:620px;">
-                <div style="border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;">
-                    <div id="leafletMap" style="width:100%;height:600px;min-height:400px;"></div>
+            <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;">
+                <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);position:relative;">
+                    <div id="mapTooltip" style="position:absolute;background:#0c1e2d;color:white;padding:8px 12px;border-radius:6px;font-size:12px;pointer-events:none;display:none;z-index:10;line-height:1.5;max-width:200px;"></div>
+                    <svg id="usaMapSvg" style="width:100%;height:480px;" viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg"></svg>
+                    <div class="map-legend">
+                        <div class="map-legend-item"><div class="map-legend-dot" style="background:#eef0f4;border:1px solid #ccc;"></div> No vendors</div>
+                        <div class="map-legend-item"><div class="map-legend-dot" style="background:#779d36;"></div> 1</div>
+                        <div class="map-legend-item"><div class="map-legend-dot" style="background:#4a7aaa;"></div> 2</div>
+                        <div class="map-legend-item"><div class="map-legend-dot" style="background:#d4870e;"></div> 3</div>
+                        <div class="map-legend-item"><div class="map-legend-dot" style="background:#6c3ec4;"></div> 4+</div>
+                        <div class="map-legend-item" style="margin-left:8px;color:var(--text-muted);font-size:10px;">Click state to view vendors</div>
+                    </div>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);">
+                <div style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);">
                     <div style="background:var(--navy);color:white;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;">
                         <span id="mapSidebarTitle">All Vendors</span>
-                        <button onclick="clearMapFilter()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);font-size:11px;padding:3px 8px;border-radius:4px;cursor:pointer;display:none;" id="mapClearBtn">✕ Clear</button>
+                        <button onclick="clearMapFilter()" id="mapClearBtn" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);font-size:11px;padding:3px 8px;border-radius:4px;cursor:pointer;display:none;">&#x2715; Clear</button>
                     </div>
-                    <div id="mapVendorList" style="flex:1;overflow-y:auto;background:var(--bg);"></div>
+                    <div id="mapVendorList" style="flex:1;overflow-y:auto;max-height:500px;background:var(--bg);"></div>
                 </div>
             </div>
         </div>
@@ -1272,15 +1280,7 @@ function switchTab(t){
     document.getElementById('mapView').style.display=t==='map'?'block':'none';
     document.getElementById('rfpView').style.display=t==='rfp'?'block':'none';
     if(t==='dashboard'&&listId)loadVendors();
-    if(t==='map'){
-        // Map div must be visible before Leaflet init — wait a frame
-        requestAnimationFrame(function(){
-            requestAnimationFrame(function(){
-                if(listId&&!vendors.length){ loadVendors().then(function(){ renderMap(); }); }
-                else { renderMap(); }
-            });
-        });
-    }
+    if(t==='map'){ if(listId&&!vendors.length)loadVendors().then(renderMap); else renderMap(); }
     if(t==='rfp')renderRfpRoster();
 }
 
@@ -1566,169 +1566,217 @@ async function scoreAllPending() {
 // ══════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════
-// LEAFLET MAP — OSM tiles + Nominatim geocoding + MarkerCluster
+// D3 USA MAP — AlbersUSA projection, click → drawer (no popups)
 // ══════════════════════════════════════════════════════════════════
-let leafletMap=null, markerCluster=null, mapInitialized=false, mapMarkers={}, geocodeCache={};
+let mapInitialized = false;
+let mapSelectedState = null;
+let window_fipsMap = {};
 
-async function geocodeAddress(addr){
-    if(!addr) return null;
-    const k=addr.trim().toLowerCase();
-    if(geocodeCache[k]) return geocodeCache[k];
-    try{
-        const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q='+encodeURIComponent(addr),{headers:{'Accept-Language':'en-US'}});
-        const d=await r.json();
-        if(d&&d.length){const res={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};geocodeCache[k]=res;return res;}
-    }catch(e){console.warn('Geocode fail:',addr);}
-    return null;
-}
+const FIPS_TO_ABBR = {
+    '01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT',
+    '10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL',
+    '18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD',
+    '25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE',
+    '32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND',
+    '39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD',
+    '47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV',
+    '55':'WI','56':'WY'
+};
 
-function getVendorAddress(v){ return v.Address1||v.Address_x0020_1||v.field_2||''; }
-
-function mkIcon(color,inRfp){
-    const c=inRfp?'#f59e0b':color, s=inRfp?28:22;
-    return L.divIcon({html:'<div style="width:'+s+'px;height:'+s+'px;border-radius:50%;background:'+c+';border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.35);"></div>',className:'',iconSize:[s,s],iconAnchor:[s/2,s/2],popupAnchor:[0,-s/2]});
-}
-
-function mkPopup(v){
-    const contact=v.ExecName||v.field_1||'', email=v.ExecEmail||v.VendorEmail||'', docsUrl=getDocsUrl(v), inRfp=rfpSelectedVendors.includes(v.id), addr=getVendorAddress(v);
-    let h='<div style="font-family:Inter,sans-serif;min-width:220px;max-width:280px;">';
-    h+='<div style="font-family:Barlow Condensed,sans-serif;font-size:15px;font-weight:700;color:#0c1e2d;margin-bottom:4px;">'+esc(v.Title||'')+'</div>';
-    h+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;">'+tierBadge(v.Tier)+' '+statusBadge(v.Status)+'</div>';
-    if(v.EMR_Current) h+='<div style="font-size:11px;color:#5a6b7a;margin-bottom:2px;">EMR <strong style="color:'+(parseFloat(v.EMR_Current)>=1?'#c0392b':'#779d36')+';">'+v.EMR_Current+'</strong></div>';
-    if(v.AIScore) h+='<div style="margin-bottom:4px;">'+aiScoreBadge(v.AIScore,v.AIRating)+'</div>';
-    if(contact) h+='<div style="font-size:11px;color:#5a6b7a;">'+esc(contact)+(email?' · <a href="mailto:'+esc(email)+'" style="color:#375673;">'+esc(email)+'</a>':'')+'</div>';
-    if(v.Trades) h+='<div style="font-size:10px;color:#8a9baa;margin-top:2px;">🔧 '+esc(v.Trades.substring(0,60))+(v.Trades.length>60?'…':'')+'</div>';
-    if(addr) h+='<div style="font-size:10px;color:#8a9baa;">📍 '+esc(addr)+'</div>';
-    if(docsUrl) h+='<div style="margin-top:4px;"><a href="'+docsUrl+'" target="_blank" style="font-size:10px;color:#375673;">📁 View Docs</a></div>';
-    h+='<div style="margin-top:8px;display:flex;gap:6px;">';
-    h+='<button id="rfpbtn-'+v.id+'" onclick="toggleRfpFromMap(\''+v.id+'\')" style="flex:1;padding:5px 0;border-radius:4px;border:1px solid '+(inRfp?'#779d36':'#e2e8f0')+';background:'+(inRfp?'#779d36':'white')+';color:'+(inRfp?'white':'#0c1e2d')+';font-size:11px;font-weight:600;cursor:pointer;">'+(inRfp?'&#10003; In RFP':'+ Add to RFP')+'</button>';
-    h+='<button onclick="switchTab(\'dashboard\');setTimeout(function(){openDetail(\''+v.id+'\');},300);" style="padding:5px 10px;border-radius:4px;border:1px solid #e2e8f0;background:white;font-size:11px;cursor:pointer;">Review</button>';
-    h+='</div></div>';
-    return h;
-}
-
-function toggleRfpFromMap(id){
-    if(rfpSelectedVendors.includes(id)) removeFromRfp(id); else addToRfp([id]);
-    const inRfp=rfpSelectedVendors.includes(id);
-    const btn=document.getElementById('rfpbtn-'+id);
-    if(btn){btn.textContent=inRfp?'In RFP':'+ Add to RFP';btn.style.background=inRfp?'#779d36':'white';btn.style.color=inRfp?'white':'#0c1e2d';btn.style.borderColor=inRfp?'#779d36':'#e2e8f0';}
-    const v=vendors.find(x=>x.id===id);
-    if(v&&mapMarkers[id]) mapMarkers[id].setIcon(mkIcon(v.VendorType==='Subcontractor'?'#375673':'#779d36',inRfp));
-    highlightSidebarCard(id);
-}
-
-function initMap(){
-    if(mapInitialized||!document.getElementById('leafletMap')) return;
-    mapInitialized=true;
-    leafletMap=L.map('leafletMap',{center:[37.8,-96],zoom:4});
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:18}).addTo(leafletMap);
-    markerCluster=L.markerClusterGroup({maxClusterRadius:50,showCoverageOnHover:false,spiderfyOnMaxZoom:true,
-        iconCreateFunction:function(cluster){
-            const n=cluster.getChildCount(),sz=n>20?44:n>10?38:32;
-            return L.divIcon({html:'<div style="width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:#375673;border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;color:white;font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:'+(n>99?11:13)+'px;">'+n+'</div>',className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
-        }
-    });
-    leafletMap.addLayer(markerCluster);
-}
-
-async function placeVendorMarkers(){
-    if(!leafletMap||!markerCluster) return;
-    markerCluster.clearLayers(); mapMarkers={};
-    const filtered=getFilteredVendorsForMap();
-    const countEl=document.getElementById('mapVendorCount');
-    renderMapSidebar(filtered);
-    let placed=0;
-    for(let i=0;i<filtered.length;i++){
-        const v=filtered[i], addr=getVendorAddress(v);
-        if(!addr) continue;
-        const coords=await geocodeAddress(addr);
-        if(!coords) continue;
-        const inRfp=rfpSelectedVendors.includes(v.id);
-        const color=v.VendorType==='Subcontractor'?'#375673':'#779d36';
-        const marker=L.marker([coords.lat,coords.lng],{icon:mkIcon(color,inRfp)});
-        marker.bindPopup(mkPopup(v),{maxWidth:300,className:'deg-popup'});
-        marker.on('click',(function(vid){return function(){highlightSidebarCard(vid);};})(v.id));
-        markerCluster.addLayer(marker);
-        mapMarkers[v.id]=marker;
-        placed++;
-        if(countEl) countEl.textContent='Placing pins... '+placed+'/'+filtered.length;
-        await new Promise(function(r){setTimeout(r,300);});
-    }
-    if(countEl) countEl.textContent=placed+' vendor'+(placed!==1?'s':'')+' mapped';
-}
-
-function highlightSidebarCard(id){
-    document.querySelectorAll('.map-vendor-card').forEach(function(el){
-        const active=el.dataset.id===id;
-        el.style.borderLeft=active?'3px solid var(--green)':'3px solid transparent';
-        el.style.background=active?'rgba(119,157,54,0.05)':'white';
-    });
-    const card=document.querySelector('.map-vendor-card[data-id="'+id+'"]');
-    if(card) card.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-
-function renderMapSidebar(vlist){
-    const list=document.getElementById('mapVendorList');
-    if(!list) return;
-    if(!vlist) vlist=getFilteredVendorsForMap();
-    if(!vlist.length){list.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px;">No vendors match filters</div>';return;}
-    list.innerHTML=vlist.map(function(v){
-        const inRfp=rfpSelectedVendors.includes(v.id),contact=v.ExecName||v.field_1||'',addr=getVendorAddress(v);
-        return '<div class="map-vendor-card" data-id="'+v.id+'" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;background:white;border-left:3px solid '+(inRfp?'var(--green)':'transparent')+';" onclick="openMapDrawer(\''+v.id+'\');focusVendorOnMap(\''+v.id+'\');">' +
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;"><div style="font-family:Barlow Condensed,sans-serif;font-size:14px;font-weight:700;color:var(--navy);">'+esc(v.Title||'')+'</div>'+statusBadge(v.Status)+'</div>' +
-            '<div style="display:flex;gap:5px;flex-wrap:wrap;margin:3px 0;">'+tierBadge(v.Tier)+'<span style="font-size:10px;font-weight:600;color:'+(v.VendorType==='Subcontractor'?'var(--navy)':'var(--green-dark)')+';">'+esc(v.VendorType||'')+'</span>'+(v.Entity?'<span style="font-size:10px;background:var(--bg);padding:1px 5px;border-radius:3px;color:var(--text-muted);font-weight:600;">'+esc(v.Entity)+'</span>':'')+'</div>' +
-            (addr?'<div style="font-size:10px;color:var(--text-muted);">📍 '+esc(addr.substring(0,50))+(addr.length>50?'…':'')+'</div>':'') +
-            (contact?'<div style="font-size:10px;color:var(--text-muted);">👤 '+esc(contact)+'</div>':'') +
-            (v.EMR_Current?'<div style="font-size:10px;font-weight:600;color:'+(parseFloat(v.EMR_Current)>=1?'var(--red)':'var(--green-dark)')+';">EMR '+v.EMR_Current+'</div>':'') +
-            (v.AIScore?'<div style="margin-top:2px;">'+aiScoreBadge(v.AIScore,v.AIRating)+'</div>':'') +
-        '</div>';
-    }).join('');
-}
-
-function focusVendorOnMap(id){
-    highlightSidebarCard(id);
-    const marker=mapMarkers[id];
-    if(marker) markerCluster.zoomToShowLayer(marker,function(){marker.openPopup();});
+function getStateFill(abbr, counts){
+    const n = counts[abbr] || 0;
+    if(n === 0) return '#eef0f4';
+    if(n === 1) return '#779d36';
+    if(n === 2) return '#4a7aaa';
+    if(n === 3) return '#d4870e';
+    return '#6c3ec4';
 }
 
 function getFilteredVendorsForMap(){
-    const type=document.getElementById('mapFilterType')?document.getElementById('mapFilterType').value:'';
-    const tier=document.getElementById('mapFilterTier')?document.getElementById('mapFilterTier').value:'';
-    const status=document.getElementById('mapFilterStatus')?document.getElementById('mapFilterStatus').value:'';
-    const entity=document.getElementById('mapFilterEntity')?document.getElementById('mapFilterEntity').value:'';
-    const search=document.getElementById('mapFilterSearch')?document.getElementById('mapFilterSearch').value.toLowerCase():'';
-    return vendors.filter(function(v){
-        if(type&&v.VendorType!==type) return false;
-        if(tier&&v.Tier!==tier) return false;
-        if(status&&v.Status!==status) return false;
-        if(entity&&v.Entity!==entity) return false;
-        if(search&&[v.Title,v.Trades,v.CoreFunctions,v.ExecName,getVendorAddress(v)].join(' ').toLowerCase().indexOf(search)<0) return false;
+    const type   = document.getElementById('mapFilterType')?.value||'';
+    const tier   = document.getElementById('mapFilterTier')?.value||'';
+    const status = document.getElementById('mapFilterStatus')?.value||'';
+    const entity = document.getElementById('mapFilterEntity')?.value||'';
+    const search = (document.getElementById('mapFilterSearch')?.value||'').toLowerCase();
+    return vendors.filter(v=>{
+        if(type   && v.VendorType!==type)   return false;
+        if(tier   && v.Tier!==tier)         return false;
+        if(status && v.Status!==status)     return false;
+        if(entity && v.Entity!==entity)     return false;
+        if(search && [v.Title,v.Trades,v.CoreFunctions,v.ExecName].join(' ').toLowerCase().indexOf(search)<0) return false;
         return true;
     });
 }
 
-function resetMapView(){ if(leafletMap) leafletMap.setView([37.8,-96],4); }
+function buildStateCounts(){
+    const counts = {};
+    getFilteredVendorsForMap().forEach(v=>{
+        Object.values(FIPS_TO_ABBR).forEach(abbr=>{
+            if(vendorServesState(v,abbr)) counts[abbr]=(counts[abbr]||0)+1;
+        });
+    });
+    return counts;
+}
 
-function clearMapFilter(){ renderMapSidebar(); }
+function getVendorsForState(abbr){
+    return getFilteredVendorsForMap().filter(v=>vendorServesState(v,abbr));
+}
 
-function renderMap(){
-    console.log('renderMap called');
-    console.log('L defined:', typeof L !== 'undefined');
-    console.log('leafletMap div:', document.getElementById('leafletMap'));
-    console.log('leafletMap div size:', document.getElementById('leafletMap')?.offsetWidth, 'x', document.getElementById('leafletMap')?.offsetHeight);
-    console.log('vendors:', vendors.length);
-    
-    if(typeof L === 'undefined'){
-        document.getElementById('leafletMap').innerHTML = '<div style="padding:40px;text-align:center;color:red;font-family:sans-serif;"><strong>Leaflet failed to load.</strong><br>Check network tab for blocked CDN requests.</div>';
+async function initMap(){
+    if(mapInitialized) return;
+    mapInitialized = true;
+
+    // Load D3 and TopoJSON
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js');
+
+    const svgEl = document.getElementById('usaMapSvg');
+    const tooltip = document.getElementById('mapTooltip');
+    const wrap = svgEl.parentElement;
+    const W = 960, H = 580;
+
+    const svg = d3.select('#usaMapSvg').attr('viewBox',`0 0 ${W} ${H}`);
+    const projection = d3.geoAlbersUsa().translate([W/2, H/2]).scale(1280);
+    const pathGen = d3.geoPath().projection(projection);
+
+    const us = await fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json').then(r=>r.json());
+    const states = topojson.feature(us, us.objects.states).features;
+
+    // Build FIPS map
+    us.objects.states.geometries.forEach(g=>{
+        const id = String(g.id).padStart(2,'0');
+        if(FIPS_TO_ABBR[id]) window_fipsMap[g.id] = FIPS_TO_ABBR[id];
+    });
+
+    const counts = buildStateCounts();
+    const g = svg.append('g');
+
+    g.selectAll('path')
+        .data(states)
+        .join('path')
+        .attr('d', pathGen)
+        .attr('data-abbr', d=> window_fipsMap[d.id]||'')
+        .attr('fill', d=> getStateFill(window_fipsMap[d.id], counts))
+        .attr('stroke','#fff')
+        .attr('stroke-width', 1)
+        .style('cursor','pointer')
+        .style('transition','fill 0.15s, opacity 0.15s')
+        .on('mouseenter', function(event, d){
+            const abbr = window_fipsMap[d.id]||'';
+            const vs = getVendorsForState(abbr);
+            tooltip.style.display='block';
+            tooltip.innerHTML = '<strong>'+abbr+'</strong>'+(vs.length?' — '+vs.length+' vendor'+(vs.length>1?'s':''):'<br><span style="opacity:.6">No coverage</span>');
+            d3.select(this).attr('stroke-width',2).attr('stroke','var(--navy)');
+        })
+        .on('mousemove', function(event){
+            const rect = wrap.getBoundingClientRect();
+            tooltip.style.left=(event.clientX-rect.left+14)+'px';
+            tooltip.style.top=(event.clientY-rect.top-10)+'px';
+        })
+        .on('mouseleave', function(){
+            tooltip.style.display='none';
+            d3.select(this).attr('stroke-width',1).attr('stroke','#fff');
+        })
+        .on('click', function(event, d){
+            const abbr = window_fipsMap[d.id]||'';
+            if(!abbr) return;
+            mapSelectedState = mapSelectedState===abbr ? null : abbr;
+            updateMapColors(counts);
+            renderMapSidebar();
+            if(mapSelectedState){
+                document.getElementById('mapSidebarTitle').textContent = abbr+' — '+getVendorsForState(abbr).length+' Vendor(s)';
+                document.getElementById('mapClearBtn').style.display='';
+            } else {
+                document.getElementById('mapSidebarTitle').textContent='All Vendors';
+                document.getElementById('mapClearBtn').style.display='none';
+            }
+        });
+
+    // State labels
+    const TINY = ['RI','CT','DE','DC','MA','NJ','NH','VT','MD'];
+    g.selectAll('text')
+        .data(states.filter(d=> window_fipsMap[d.id] && !TINY.includes(window_fipsMap[d.id])))
+        .join('text')
+        .attr('x', d=>{ const c=pathGen.centroid(d); return c[0]||0; })
+        .attr('y', d=>{ const c=pathGen.centroid(d); return (c[1]||0)+1; })
+        .attr('text-anchor','middle')
+        .attr('dominant-baseline','middle')
+        .attr('font-size', d=> ['AK','TX','CA','MT','NM','AZ','NV','CO','WY','OR','ID','WA'].includes(window_fipsMap[d.id]) ? 11 : 8)
+        .attr('font-family',"'Barlow Condensed',sans-serif")
+        .attr('font-weight','700')
+        .attr('fill', d=>{ const n=counts[window_fipsMap[d.id]]||0; return n>0?'rgba(255,255,255,0.9)':'#8a9baa'; })
+        .attr('pointer-events','none')
+        .text(d=> window_fipsMap[d.id]||'');
+
+    renderMapSidebar();
+    const cnt = document.getElementById('mapVendorCount');
+    if(cnt) cnt.textContent = getFilteredVendorsForMap().length+' vendors';
+}
+
+function updateMapColors(counts){
+    const cts = counts || buildStateCounts();
+    d3.selectAll('#usaMapSvg path[data-abbr]').each(function(){
+        const abbr = this.getAttribute('data-abbr');
+        d3.select(this)
+            .attr('fill', getStateFill(abbr, cts))
+            .style('opacity', mapSelectedState && mapSelectedState!==abbr ? 0.45 : 1);
+    });
+}
+
+function loadScript(src){
+    return new Promise((res,rej)=>{
+        if(document.querySelector(`script[src="${src}"]`)){res();return;}
+        const s=document.createElement('script');
+        s.src=src; s.onload=res; s.onerror=rej;
+        document.head.appendChild(s);
+    });
+}
+
+function renderMapSidebar(){
+    const list = document.getElementById('mapVendorList');
+    if(!list) return;
+    const vlist = mapSelectedState ? getVendorsForState(mapSelectedState) : getFilteredVendorsForMap();
+    if(!vlist.length){
+        list.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px;">'+(mapSelectedState?'No vendors cover '+mapSelectedState:'No vendors match filters')+'</div>';
         return;
     }
-    initMap();
-    if(leafletMap){
-        console.log('invalidateSize + placeMarkers');
-        leafletMap.invalidateSize();
-        setTimeout(function(){leafletMap.invalidateSize();placeVendorMarkers();},300);
+    list.innerHTML = vlist.map(v=>{
+        const inRfp = rfpSelectedVendors.includes(v.id);
+        const contact = v.ExecName||v.field_1||'';
+        return '<div class="map-vendor-card" data-id="'+v.id+'" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;background:white;border-left:3px solid '+(inRfp?'var(--green)':'transparent')+';" onclick="openMapDrawer(\''+v.id+'\')">'+
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'+
+                '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;color:var(--navy);">'+esc(v.Title||'')+'</div>'+
+                statusBadge(v.Status)+
+            '</div>'+
+            '<div style="display:flex;gap:5px;flex-wrap:wrap;margin:3px 0;">'+
+                tierBadge(v.Tier)+
+                '<span style="font-size:10px;font-weight:600;color:'+(v.VendorType==='Subcontractor'?'var(--navy)':'var(--green-dark)')+';">'+esc(v.VendorType||'')+'</span>'+
+                (v.Entity?'<span style="font-size:10px;background:var(--bg);padding:1px 5px;border-radius:3px;color:var(--text-muted);font-weight:600;">'+esc(v.Entity)+'</span>':'')+
+            '</div>'+
+            (contact?'<div style="font-size:10px;color:var(--text-muted);">'+esc(contact)+'</div>':'')+
+            (v.EMR_Current?'<div style="font-size:10px;font-weight:600;color:'+(parseFloat(v.EMR_Current)>=1?'var(--red)':'var(--green-dark)')+';">EMR '+v.EMR_Current+'</div>':'')+
+            (v.AIScore?'<div style="margin-top:2px;">'+aiScoreBadge(v.AIScore,v.AIRating)+'</div>':'')+
+        '</div>';
+    }).join('');
+}
+
+function clearMapFilter(){
+    mapSelectedState = null;
+    document.getElementById('mapSidebarTitle').textContent='All Vendors';
+    document.getElementById('mapClearBtn').style.display='none';
+    updateMapColors();
+    renderMapSidebar();
+}
+
+function renderMap(){
+    if(!mapInitialized){
+        initMap();
     } else {
-        console.error('leafletMap is null after initMap');
+        const counts = buildStateCounts();
+        updateMapColors(counts);
+        renderMapSidebar();
+        const cnt = document.getElementById('mapVendorCount');
+        if(cnt) cnt.textContent = getFilteredVendorsForMap().length+' vendors';
     }
 }
 
