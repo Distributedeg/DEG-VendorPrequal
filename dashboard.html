@@ -268,16 +268,16 @@
                     <table>
                         <thead><tr>
                             <th onclick="sortTable('Title')">Company <span class="sort-arrow" id="sort-Title"></span></th>
-                            <th>Contact</th>
+                            <th>Exec Contact</th>
                             <th>Phone</th>
                             <th>Email</th>
-                            <th>Address</th>
                             <th onclick="sortTable('VendorType')">Type <span class="sort-arrow" id="sort-VendorType"></span></th>
                             <th onclick="sortTable('Tier')">Tier <span class="sort-arrow" id="sort-Tier"></span></th>
                             <th onclick="sortTable('Entity')">Entity <span class="sort-arrow" id="sort-Entity"></span></th>
                             <th onclick="sortTable('Status')">Status <span class="sort-arrow" id="sort-Status"></span></th>
                             <th onclick="sortTable('EMR_Current')">EMR</th>
                             <th onclick="sortTable('AIScore')">AI Score <span class="sort-arrow" id="sort-AIScore"></span></th>
+                            <th>Docs</th>
                             <th>Actions</th>
                         </tr></thead>
                         <tbody id="vendorTableBody"><tr class="loading-row"><td colspan="10"><div class="spinner"></div> Loading vendors...</td></tr></tbody>
@@ -887,19 +887,32 @@ function sortTable(c){if(sortCol===c)sortDir=sortDir==='asc'?'desc':'asc';else{s
 function renderTable(){
     const tb=document.getElementById('vendorTableBody');
     if(!filteredVendors.length){tb.innerHTML='<tr class="loading-row"><td colspan="11">No vendors match your filters.</td></tr>';return;}
-    tb.innerHTML=filteredVendors.map(v=>`<tr>
+    const getDocsUrl = v => {
+        if(v.DocumentsFolder && typeof v.DocumentsFolder === 'object' && v.DocumentsFolder.Url) return v.DocumentsFolder.Url;
+        if(typeof v.DocumentsFolder === 'string' && v.DocumentsFolder.startsWith('http')) return v.DocumentsFolder;
+        return null;
+    };
+    tb.innerHTML=filteredVendors.map(v=>{
+        const contact = v.ExecName || v.field_1 || '—';
+        const phone   = v.ExecPhone || v.field_4 || '—';
+        const email   = v.ExecEmail || v.VendorEmail || '—';
+        const docsUrl = getDocsUrl(v);
+        const docsCell = docsUrl
+            ? `<a href="${docsUrl}" target="_blank" title="View documents" style="font-size:20px;text-decoration:none;">📁</a>`
+            : '<span style="color:#ccc;">—</span>';
+        return `<tr>
         <td><strong>${esc(v.Title||'')}</strong></td>
-        <td style="font-size:12px;">${esc(v.field_1||'—')}</td>
-        <td style="font-size:12px;">${esc(v.field_4||'—')}</td>
-        <td style="font-size:12px;">${esc(v.VendorEmail||'—')}</td>
-        <td style="font-size:12px;max-width:180px;">${esc(v.field_2||'—')}</td>
+        <td style="font-size:12px;">${esc(contact)}</td>
+        <td style="font-size:12px;">${esc(phone)}</td>
+        <td style="font-size:12px;">${esc(email)}</td>
         <td style="font-size:11px;font-weight:600;color:${v.VendorType==='Subcontractor'?'var(--navy)':'var(--green-dark)'}">${esc(v.VendorType||'—')}</td>
         <td>${tierBadge(v.Tier)}</td><td>${esc(v.Entity||'')}</td>
         <td>${statusBadge(v.Status)}</td>
         <td style="font-family:'Barlow Condensed',sans-serif;font-weight:600;color:${v.EMR_Current&&parseFloat(v.EMR_Current)>=1?'var(--red)':'var(--navy)'}">${esc(v.EMR_Current||'—')}</td>
         <td>${aiScoreBadge(v.AIScore,v.AIRating)}</td>
+        <td style="text-align:center;">${docsCell}</td>
         <td><button class="btn btn-secondary btn-sm" onclick="openDetail('${v.id}')">Review</button></td>
-    </tr>`).join('');
+    </tr>`;}).join('');
 }
 
 function updateStats(){
@@ -922,13 +935,16 @@ function openDetail(id){
     panel.innerHTML=`
         <div class="dp-header"><div><h2>${esc(v.Title||'')}</h2><span style="font-size:13px;color:var(--text-light)">${esc(v.DBA||'')}</span></div><button class="dp-close" onclick="closeDetail()">✕</button></div>
         <div style="display:flex;gap:8px;margin-bottom:16px;">${tierBadge(v.Tier)} ${statusBadge(v.Status)}<span style="font-size:12px;color:var(--text-light);align-self:center;margin-left:auto;">ID: ${v.id}</span></div>
-        <div class="dp-section"><h4>Contact</h4><div class="dp-grid">
-            <div class="dp-field"><label>Name</label><span>${esc(v.field_1||'')}</span></div>
-            <div class="dp-field"><label>Title</label><span>${esc(v.ContactTitle||'—')}</span></div>
-            <div class="dp-field"><label>Email</label><span>${esc(v.VendorEmail||'')}</span></div>
-            <div class="dp-field"><label>Phone</label><span>${esc(v.field_4||'')}</span></div>
-            <div class="dp-field" style="grid-column:1/-1"><label>Address</label><span>${esc(v.field_2||'—')}</span></div>
+        <div class="dp-section"><h4>Contacts</h4><div class="dp-grid">
+            <div class="dp-field"><label>Exec Name</label><span>${esc(v.ExecName||v.field_1||'—')}</span></div>
+            <div class="dp-field"><label>Exec Email</label><span>${esc(v.ExecEmail||v.VendorEmail||'—')}</span></div>
+            <div class="dp-field"><label>Exec Phone</label><span>${esc(v.ExecPhone||v.field_4||'—')}</span></div>
+            <div class="dp-field"><label>Ops Name</label><span>${esc(v.OpsName||'—')}</span></div>
+            <div class="dp-field"><label>Ops Email</label><span>${esc(v.OpsEmail||'—')}</span></div>
+            <div class="dp-field"><label>Ops Phone</label><span>${esc(v.OpsPhone||'—')}</span></div>
+            <div class="dp-field" style="grid-column:1/-1"><label>Address</label><span>${esc(v.Address1||v.field_2||'—')}</span></div>
         </div></div>
+        ${(()=>{ const du=getDocsUrl(v); return du?`<div class="dp-section"><h4>Vendor Documents</h4><a href="${du}" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">📁 Open Document Folder in SharePoint</a></div>`:''; })()}
         <div class="dp-section"><h4>Scope</h4><div class="dp-grid">
             <div class="dp-field"><label>Entity</label><span>${esc(v.Entity||'')}</span></div>
             <div class="dp-field"><label>Years in Business</label><span>${v.YearsInBusiness||'—'}</span></div>
@@ -997,6 +1013,11 @@ function switchTab(t){
     if(t==='dashboard'&&listId)loadVendors();
 }
 
+function getDocsUrl(v){
+    if(v.DocumentsFolder&&typeof v.DocumentsFolder==='object'&&v.DocumentsFolder.Url)return v.DocumentsFolder.Url;
+    if(typeof v.DocumentsFolder==='string'&&v.DocumentsFolder.startsWith('http'))return v.DocumentsFolder;
+    return null;
+}
 function val(id){return document.getElementById(id)?.value?.trim()||'';}
 function numVal(id){const n=parseFloat(val(id));return isNaN(n)?null:n;}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
