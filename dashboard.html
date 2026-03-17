@@ -1629,19 +1629,7 @@ async function initMap(){
 
     const counts = buildStateCounts();
     console.log('State counts:', JSON.stringify(counts));
-    console.log('Vendors loaded:', vendors.length);
-    if(vendors.length > 0){
-        const v0 = vendors[0];
-        // Find any field that looks like a region/state field
-        const regionKeys = Object.keys(v0).filter(k => 
-            k.toLowerCase().includes('region') || 
-            k.toLowerCase().includes('state') || 
-            k.toLowerCase().includes('service') ||
-            (typeof v0[k] === 'string' && v0[k].match(/^[A-Z]{2}(,\s*[A-Z]{2})*$/))
-        );
-        console.log('Possible region fields:', regionKeys, regionKeys.map(k=>v0[k]));
-        console.log('ALL vendor fields:', Object.keys(v0).join(', '));
-    }
+    if(vendors.length>0) console.log('Sample vendor states:', [...getVendorStates(vendors[0])], 'from address:', vendors[0].Address1||vendors[0].Address_x0020_1||vendors[0].field_2);
 
     const g = svg.append('g').attr('class','states-group');
 
@@ -2146,17 +2134,38 @@ function toggleRfpFromPopup(id, btn){
 // ══════════════════════════════════════════════════════════════════
 // FIX ServiceRegion parsing -- handle all formats
 // ══════════════════════════════════════════════════════════════════
+const ALL_STATE_ABBRS = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID',
+    'IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE',
+    'NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN',
+    'TX','UT','VT','VA','WA','WV','WI','WY','DC'];
+
+function extractStatesFromText(text){
+    if(!text || typeof text !== 'string') return [];
+    const upper = text.toUpperCase();
+    if(upper.includes('NATIONWIDE')) return ['NATIONWIDE'];
+    const found = [];
+    ALL_STATE_ABBRS.forEach(function(s){
+        var pattern = new RegExp('(?:^|[^A-Z])' + s + '(?:[^A-Z]|$)');
+        if(pattern.test(upper)) found.push(s);
+    });
+    return found;
+}
+
+function getVendorStates(v){
+    var states = new Set();
+    var fields = [v.ServiceRegion, v.Address1, v.Address_x0020_1, v.field_2];
+    fields.forEach(function(f){ extractStatesFromText(f).forEach(function(s){ states.add(s); }); });
+    return states;
+}
+
 function vendorServesState(v, abbr){
-    const region = (v.ServiceRegion||'').toUpperCase().trim();
-    if(!region) return false;
-    if(region.includes('NATIONWIDE')) return true;
-    // Split on comma, space, semicolon -- check each token
-    const tokens = region.split(/[\s,;]+/).map(t=>t.trim()).filter(Boolean);
-    return tokens.includes(abbr.toUpperCase());
+    var states = getVendorStates(v);
+    if(states.has('NATIONWIDE')) return true;
+    return states.has(abbr.toUpperCase());
 }
 
 function getVendorsForStateFixed(abbr){
-    return getFilteredVendorsForMap().filter(v=>vendorServesState(v,abbr));
+    return getFilteredVendorsForMap().filter(function(v){ return vendorServesState(v,abbr); });
 }
 
 initMsal();
