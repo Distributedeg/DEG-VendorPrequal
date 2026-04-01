@@ -209,6 +209,35 @@
         .trade-cb-item input { accent-color:var(--green); width:14px; height:14px; }
         @media(max-width:1100px){ .rfp-layout { grid-template-columns:1fr; } }
 
+        /* ── ACTIVE RFPS LOG ── */
+        .rfp-log-table{width:100%;border-collapse:collapse;font-size:12px;}
+        .rfp-log-table th{background:#f0f4f8;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:1;}
+        .rfp-log-table td{padding:8px 10px;border-bottom:1px solid #f0f4f8;vertical-align:top;}
+        .rfp-log-table tr:hover{background:#fafbfc;}
+        .rfp-log-table tr.expanded{background:#f8fbf6;}
+        .rfp-log-proj{font-weight:700;color:var(--navy);font-size:13px;cursor:pointer;}
+        .rfp-log-proj:hover{color:var(--green);}
+        .rfp-status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+        .rfp-status-draft{background:#f0f4f8;color:var(--text-muted);}
+        .rfp-status-sent{background:#e8f4fd;color:#2979d4;}
+        .rfp-status-responses{background:#fff7e6;color:var(--amber);}
+        .rfp-status-awarded{background:#e8f8ef;color:#2ecc8a;}
+        .rfp-status-closed{background:#f5f5f5;color:#999;}
+        .rfp-detail-row td{padding:0 !important;border-bottom:2px solid var(--border);}
+        .rfp-detail-inner{padding:16px 20px;background:#fafbfc;}
+        .rfp-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+        .rfp-detail-section{background:white;border:1px solid var(--border);border-radius:6px;padding:12px 14px;}
+        .rfp-detail-section h4{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+        .rfp-note-entry{border:1px solid #e2e8f0;border-radius:5px;padding:6px 10px;margin-bottom:6px;background:white;font-size:12px;}
+        .rfp-note-ts{font-size:9px;color:var(--text-light);font-weight:600;}
+        .rfp-note-text{color:var(--text);margin-top:2px;line-height:1.4;}
+        .rfp-note-input{display:flex;gap:6px;margin-top:8px;}
+        .rfp-note-input input{flex:1;border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-size:12px;font-family:inherit;}
+        .rfp-note-input input:focus{border-color:var(--green);outline:none;}
+        .rfp-note-input button{background:var(--green);color:white;border:none;border-radius:5px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;}
+        .rfp-resp-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;border-bottom:1px solid #f0f4f8;}
+        .rfp-resp-row:last-child{border-bottom:none;}
+
         /* ── MAP VIEW ── */
         .map-controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
         .map-controls select, .map-controls input { padding:7px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:white; }
@@ -288,6 +317,11 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                 RFP Builder
                 <span class="sb-badge" id="rfpBadge" style="display:none;">0</span>
+            </div>
+            <div class="sb-item" data-tab="rfplog" onclick="switchTab('rfplog')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Active RFPs
+                <span class="sb-badge" id="rfpLogBadge" style="display:none;">0</span>
             </div>
         </div>
         <div class="sb-section">
@@ -811,6 +845,44 @@
             </div>
         </div>
 
+        <!-- ══ ACTIVE RFPS LOG ════════════════════════════════════ -->
+        <div id="rfpLogView" style="display:none;">
+            <div class="page-header">
+                <h2>Active <span>RFPs</span></h2>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <select id="rfpLogFilter" onchange="renderRfpLog()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+                        <option value="">All Statuses</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Sent">Sent</option>
+                        <option value="Responses In">Responses In</option>
+                        <option value="Awarded">Awarded</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                    <button class="btn btn-secondary btn-sm" onclick="loadRfpLog()">↺ Refresh</button>
+                </div>
+            </div>
+            <div class="card" style="padding:0;overflow:hidden;">
+                <div style="overflow-x:auto;">
+                    <table class="rfp-log-table">
+                        <thead><tr>
+                            <th style="width:30px;"></th>
+                            <th>Project</th>
+                            <th>Location</th>
+                            <th>Vendors</th>
+                            <th>Scope</th>
+                            <th>Bid Due</th>
+                            <th>Date Sent</th>
+                            <th>Status</th>
+                            <th style="width:60px;"></th>
+                        </tr></thead>
+                        <tbody id="rfpLogBody">
+                            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-light);">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div id="schemaView" style="display:none;">
             <div class="page-header"><h2>SharePoint <span>List Setup</span></h2></div>
             <div class="card">
@@ -1288,10 +1360,12 @@ function switchTab(t){
     document.getElementById('schemaView').style.display=t==='schema'?'block':'none';
     document.getElementById('mapView').style.display=t==='map'?'block':'none';
     document.getElementById('rfpView').style.display=t==='rfp'?'block':'none';
+    document.getElementById('rfpLogView').style.display=t==='rfplog'?'block':'none';
     document.getElementById('pmoView').style.display=t==='pmo'?'block':'none';
     if(t==='dashboard'&&listId)loadVendors();
     if(t==='map'){ if(listId&&!vendors.length)loadVendors().then(renderMap); else renderMap(); }
     if(t==='rfp')renderRfpRoster();
+    if(t==='rfplog')loadRfpLog();
     if(t==='pmo'){
         var f=document.getElementById('pmoFrame');
         if(!f.src||f.src==='about:blank'||!f.src.includes('pmo.html'))f.src='pmo.html';
@@ -1985,6 +2059,9 @@ Then the email body -- professional, concise, under 200 words. Reference the pro
         if(subject) document.getElementById('rfpEmailSubject').value = subject;
 
         showToast('RFP generated!','success');
+
+        // Auto-save to RFP Log
+        try { await saveRfpToLog(rfpDoc, emailBody, subject); } catch(e){ console.warn('RFP log save failed:', e); }
     } catch(e){
         showToast('Generation error: '+e.message,'error');
         document.getElementById('rfpOutput').textContent='Error: '+e.message;
@@ -2054,6 +2131,289 @@ function printRfpPdf(){
     <script>window.onload=()=>window.print();<\/script></body></html>`;
     const w = window.open('','_blank');
     w.document.write(html);
+    w.document.close();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ACTIVE RFPS LOG — SharePoint List + File Storage
+// ══════════════════════════════════════════════════════════════════
+let rfpLogListId = null;
+let rfpLogData = [];
+let rfpLogExpanded = {};
+
+const RFP_LOG_LIST_NAME = 'RFPLog';
+const RFP_LOG_COLUMNS = [
+    { name:'ProjectName', type:'text' },
+    { name:'Location', type:'text' },
+    { name:'SystemSize', type:'text' },
+    { name:'BidDueDate', type:'dateTime' },
+    { name:'ConstructionStart', type:'dateTime' },
+    { name:'ContractValue', type:'text' },
+    { name:'VendorsSent', type:'note' },
+    { name:'Scope', type:'text' },
+    { name:'ScopeNotes', type:'note' },
+    { name:'RFPContent', type:'note' },
+    { name:'EmailContent', type:'note' },
+    { name:'DateSent', type:'dateTime' },
+    { name:'Status', type:'choice', choices:['Draft','Sent','Responses In','Awarded','Closed'] },
+    { name:'Notes', type:'note' },
+    { name:'AwardedVendor', type:'text' },
+    { name:'DataRoomLink', type:'text' },
+    { name:'Responses', type:'note' }
+];
+
+async function ensureRfpLogList(){
+    if(rfpLogListId) return rfpLogListId;
+    try {
+        const d = await graphGet(`/sites/${CONFIG.siteId}/lists?$filter=displayName eq '${RFP_LOG_LIST_NAME}'`);
+        if(d.value && d.value.length > 0){ rfpLogListId = d.value[0].id; return rfpLogListId; }
+    } catch(e){}
+    // Create the list
+    try {
+        const r = await graphPost(`/sites/${CONFIG.siteId}/lists`, {
+            displayName: RFP_LOG_LIST_NAME,
+            list: { template: 'genericList' }
+        });
+        rfpLogListId = r.id;
+        // Add columns
+        for(const col of RFP_LOG_COLUMNS){
+            const def = { name: col.name, displayName: col.name };
+            if(col.type === 'text') def.text = {};
+            else if(col.type === 'note') def.text = { allowMultipleLines: true };
+            else if(col.type === 'dateTime') def.dateTime = { format: 'dateOnly' };
+            else if(col.type === 'choice') def.choice = { choices: col.choices, displayAs: 'dropDownMenu' };
+            try { await graphPost(`/sites/${CONFIG.siteId}/lists/${rfpLogListId}/columns`, def); } catch(e){ console.warn('Col '+col.name+':', e.message); }
+        }
+        showToast('RFPLog list created in SharePoint', 'success');
+        return rfpLogListId;
+    } catch(e){
+        showToast('Failed to create RFPLog list: '+e.message, 'error');
+        return null;
+    }
+}
+
+async function saveRfpToLog(rfpDoc, emailBody, emailSubject){
+    const lid = await ensureRfpLogList();
+    if(!lid) return;
+
+    const sel = rfpSelectedVendors.map(id=>vendors.find(v=>v.id===id)).filter(Boolean);
+    const projName = document.getElementById('rfp_projectName')?.value||'';
+    const location = document.getElementById('rfp_location')?.value||'';
+    const systemSize = document.getElementById('rfp_systemSize')?.value||'';
+    const bidDate = document.getElementById('rfp_bidDate')?.value||'';
+    const startDate = document.getElementById('rfp_startDate')?.value||'';
+    const contractVal = document.getElementById('rfp_contractValue')?.value||'';
+    const dataRoom = document.getElementById('rfp_dataRoom')?.value||'';
+    const scopeNotes = document.getElementById('rfp_scopeNotes')?.value||'';
+    const trades = getRfpTradesSelected();
+
+    const vendorNames = sel.map(v=>v.Title||'Unknown').join(', ');
+    const now = new Date().toISOString();
+
+    const fields = {
+        Title: projName + ' — ' + new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+        ProjectName: projName,
+        Location: location,
+        SystemSize: systemSize,
+        ContractValue: contractVal,
+        VendorsSent: vendorNames,
+        Scope: trades.join(', '),
+        ScopeNotes: scopeNotes,
+        RFPContent: rfpDoc.substring(0, 60000),
+        EmailContent: emailBody.substring(0, 60000),
+        DateSent: now,
+        Status: 'Sent',
+        DataRoomLink: dataRoom,
+        Notes: '[' + new Date().toLocaleDateString('en-US') + '] RFP generated and sent to ' + sel.length + ' vendor(s)',
+        Responses: JSON.stringify(sel.map(v=>({ vendor: v.Title||'', responded: false, responseDate: '', amount: '', notes: '' })))
+    };
+    if(bidDate) fields.BidDueDate = bidDate + 'T00:00:00Z';
+    if(startDate) fields.ConstructionStart = startDate + 'T00:00:00Z';
+
+    try {
+        await graphPost(`/sites/${CONFIG.siteId}/lists/${lid}/items`, { fields });
+        showToast('RFP saved to Active RFPs log', 'success');
+        // Update badge
+        loadRfpLog();
+    } catch(e){
+        showToast('Failed to save RFP: '+e.message, 'error');
+        console.error('RFP save error:', e);
+    }
+}
+
+async function loadRfpLog(){
+    const lid = await ensureRfpLogList();
+    if(!lid){ document.getElementById('rfpLogBody').innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-light);">RFPLog list not found. Generate an RFP to create it.</td></tr>'; return; }
+    try {
+        const d = await graphGet(`/sites/${CONFIG.siteId}/lists/${lid}/items?$expand=fields&$top=200&$orderby=fields/DateSent desc`);
+        rfpLogData = (d.value||[]).map(i=>({ id: i.id, ...i.fields }));
+        // Update badge
+        const active = rfpLogData.filter(r=>r.Status && r.Status!=='Closed').length;
+        const badge = document.getElementById('rfpLogBadge');
+        if(badge){ badge.style.display = active > 0 ? '' : 'none'; badge.textContent = active; }
+        renderRfpLog();
+    } catch(e){
+        document.getElementById('rfpLogBody').innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--red);">Error loading: '+esc(e.message)+'</td></tr>';
+    }
+}
+
+function renderRfpLog(){
+    const filter = document.getElementById('rfpLogFilter')?.value||'';
+    let data = rfpLogData;
+    if(filter) data = data.filter(r=>r.Status===filter);
+
+    const tb = document.getElementById('rfpLogBody');
+    if(!data.length){ tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-light);">No RFPs found.</td></tr>'; return; }
+
+    let html = '';
+    data.forEach(r => {
+        const expanded = rfpLogExpanded[r.id];
+        const statusCls = {'Draft':'draft','Sent':'sent','Responses In':'responses','Awarded':'awarded','Closed':'closed'}[r.Status]||'draft';
+        const vendorCount = (r.VendorsSent||'').split(',').filter(Boolean).length;
+        const bidDate = r.BidDueDate ? new Date(r.BidDueDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+        const sentDate = r.DateSent ? new Date(r.DateSent).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+
+        html += '<tr class="'+(expanded?'expanded':'')+'">';
+        html += '<td style="text-align:center;cursor:pointer;" onclick="toggleRfpLogRow(\''+r.id+'\')">'+(expanded?'▼':'▶')+'</td>';
+        html += '<td class="rfp-log-proj" onclick="toggleRfpLogRow(\''+r.id+'\')">'+esc(r.ProjectName||r.Title||'—')+'</td>';
+        html += '<td style="font-size:11px;color:var(--text-muted);">'+esc(r.Location||'—')+'</td>';
+        html += '<td style="font-size:11px;">'+vendorCount+' vendor'+(vendorCount!==1?'s':'')+'</td>';
+        html += '<td style="font-size:11px;color:var(--text-muted);">'+esc((r.Scope||'').substring(0,40))+(r.Scope&&r.Scope.length>40?'...':'')+'</td>';
+        html += '<td style="font-size:11px;">'+bidDate+'</td>';
+        html += '<td style="font-size:11px;">'+sentDate+'</td>';
+        html += '<td><span class="rfp-status rfp-status-'+statusCls+'">'+esc(r.Status||'Draft')+'</span></td>';
+        html += '<td><select style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;" onchange="updateRfpStatus(\''+r.id+'\',this.value)">';
+        ['Draft','Sent','Responses In','Awarded','Closed'].forEach(s=>{
+            html += '<option'+(r.Status===s?' selected':'')+'>'+s+'</option>';
+        });
+        html += '</select></td>';
+        html += '</tr>';
+
+        if(expanded){
+            html += '<tr class="rfp-detail-row"><td colspan="9"><div class="rfp-detail-inner">';
+            html += '<div class="rfp-detail-grid">';
+
+            // Left: Details + Vendors
+            html += '<div class="rfp-detail-section"><h4>RFP Details</h4>';
+            html += '<div style="font-size:12px;line-height:1.8;">';
+            html += '<div><strong>System Size:</strong> '+esc(r.SystemSize||'—')+'</div>';
+            html += '<div><strong>Contract Value:</strong> '+esc(r.ContractValue||'—')+'</div>';
+            html += '<div><strong>Construction Start:</strong> '+(r.ConstructionStart?new Date(r.ConstructionStart).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—')+'</div>';
+            if(r.DataRoomLink) html += '<div><strong>Data Room:</strong> <a href="'+esc(r.DataRoomLink)+'" target="_blank" style="color:var(--green);">Open →</a></div>';
+            html += '<div style="margin-top:8px;"><strong>Vendors:</strong> '+esc(r.VendorsSent||'—')+'</div>';
+            html += '<div><strong>Scope:</strong> '+esc(r.Scope||'—')+'</div>';
+            if(r.ScopeNotes) html += '<div><strong>Scope Notes:</strong> '+esc(r.ScopeNotes)+'</div>';
+            html += '</div></div>';
+
+            // Right: Vendor Responses
+            html += '<div class="rfp-detail-section"><h4>Vendor Responses</h4>';
+            var responses = [];
+            try { responses = JSON.parse(r.Responses||'[]'); } catch(e){}
+            if(responses.length){
+                responses.forEach((resp,ri)=>{
+                    html += '<div class="rfp-resp-row">';
+                    html += '<input type="checkbox" style="accent-color:var(--green);width:14px;height:14px;" '+(resp.responded?'checked':'')+' onchange="updateRfpResponse(\''+r.id+'\','+ri+',\'responded\',this.checked)">';
+                    html += '<span style="flex:1;font-weight:600;color:var(--navy);">'+esc(resp.vendor)+'</span>';
+                    html += '<input type="date" value="'+esc(resp.responseDate||'')+'" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;width:110px;" onchange="updateRfpResponse(\''+r.id+'\','+ri+',\'responseDate\',this.value)">';
+                    html += '<input type="text" value="'+esc(resp.amount||'')+'" placeholder="$" style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;width:80px;text-align:right;" onblur="updateRfpResponse(\''+r.id+'\','+ri+',\'amount\',this.value)">';
+                    html += '</div>';
+                });
+            } else {
+                html += '<div style="font-size:12px;color:var(--text-light);">No vendor tracking data.</div>';
+            }
+            if(r.AwardedVendor) html += '<div style="margin-top:8px;padding:6px 10px;background:#e8f8ef;border-radius:5px;font-size:12px;font-weight:700;color:#2ecc8a;">🏆 Awarded to: '+esc(r.AwardedVendor)+'</div>';
+            html += '</div>';
+
+            html += '</div>';
+
+            // Notes log
+            html += '<div class="rfp-detail-section" style="margin-top:0;"><h4>Notes & Activity</h4>';
+            var notes = (r.Notes||'').split('\n').filter(Boolean);
+            notes.forEach(n=>{
+                var m = n.match(/^\[([^\]]+)\]\s*(.*)$/);
+                html += '<div class="rfp-note-entry">';
+                if(m){ html += '<div class="rfp-note-ts">'+esc(m[1])+'</div><div class="rfp-note-text">'+esc(m[2])+'</div>'; }
+                else { html += '<div class="rfp-note-text">'+esc(n)+'</div>'; }
+                html += '</div>';
+            });
+            html += '<div class="rfp-note-input"><input id="rfpNote_'+r.id+'" placeholder="Add note..." onkeydown="if(event.key===\'Enter\')addRfpNote(\''+r.id+'\')"><button onclick="addRfpNote(\''+r.id+'\')">Add</button></div>';
+            html += '</div>';
+
+            // View RFP content button
+            html += '<div style="margin-top:12px;display:flex;gap:8px;">';
+            html += '<button class="btn btn-secondary btn-sm" onclick="viewRfpContent(\''+r.id+'\')">📄 View RFP Document</button>';
+            html += '<button class="btn btn-secondary btn-sm" onclick="viewRfpEmail(\''+r.id+'\')">✉ View Email Draft</button>';
+            html += '</div>';
+
+            html += '</div></td></tr>';
+        }
+    });
+    tb.innerHTML = html;
+}
+
+function toggleRfpLogRow(id){ rfpLogExpanded[id] = !rfpLogExpanded[id]; renderRfpLog(); }
+
+async function updateRfpStatus(id, status){
+    const lid = await ensureRfpLogList();
+    if(!lid) return;
+    try {
+        await graphPatch(`/sites/${CONFIG.siteId}/lists/${lid}/items/${id}/fields`, { Status: status });
+        var idx = rfpLogData.findIndex(r=>r.id===id);
+        if(idx>=0) rfpLogData[idx].Status = status;
+        renderRfpLog();
+        showToast('Status updated','success');
+    } catch(e){ showToast('Update failed: '+e.message,'error'); }
+}
+
+async function addRfpNote(id){
+    var inp = document.getElementById('rfpNote_'+id);
+    if(!inp||!inp.value.trim()) return;
+    var lid = await ensureRfpLogList();
+    if(!lid) return;
+    var idx = rfpLogData.findIndex(r=>r.id===id);
+    if(idx<0) return;
+    var ts = new Date().toLocaleDateString('en-US') + ' ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    var newNote = '['+ts+'] '+inp.value.trim();
+    var existing = rfpLogData[idx].Notes||'';
+    var updated = existing ? existing+'\n'+newNote : newNote;
+    try {
+        await graphPatch(`/sites/${CONFIG.siteId}/lists/${lid}/items/${id}/fields`, { Notes: updated });
+        rfpLogData[idx].Notes = updated;
+        renderRfpLog();
+        showToast('Note added','success');
+    } catch(e){ showToast('Note save failed: '+e.message,'error'); }
+}
+
+async function updateRfpResponse(id, respIdx, field, value){
+    var lid = await ensureRfpLogList();
+    if(!lid) return;
+    var idx = rfpLogData.findIndex(r=>r.id===id);
+    if(idx<0) return;
+    var responses = [];
+    try { responses = JSON.parse(rfpLogData[idx].Responses||'[]'); } catch(e){}
+    if(!responses[respIdx]) return;
+    responses[respIdx][field] = value;
+    var json = JSON.stringify(responses);
+    try {
+        await graphPatch(`/sites/${CONFIG.siteId}/lists/${lid}/items/${id}/fields`, { Responses: json });
+        rfpLogData[idx].Responses = json;
+        if(field==='responded') renderRfpLog();
+    } catch(e){ showToast('Response update failed: '+e.message,'error'); }
+}
+
+function viewRfpContent(id){
+    var r = rfpLogData.find(x=>x.id===id);
+    if(!r||!r.RFPContent){ showToast('No RFP content saved.','error'); return; }
+    var w = window.open('','_blank');
+    w.document.write('<html><head><title>'+esc(r.ProjectName||'RFP')+'</title><style>body{font-family:Inter,sans-serif;padding:40px;max-width:800px;margin:0 auto;font-size:13px;line-height:1.8;color:#1e2a36;white-space:pre-wrap;}</style></head><body>'+esc(r.RFPContent)+'</body></html>');
+    w.document.close();
+}
+
+function viewRfpEmail(id){
+    var r = rfpLogData.find(x=>x.id===id);
+    if(!r||!r.EmailContent){ showToast('No email content saved.','error'); return; }
+    var w = window.open('','_blank');
+    w.document.write('<html><head><title>Email — '+esc(r.ProjectName||'RFP')+'</title><style>body{font-family:Inter,sans-serif;padding:40px;max-width:600px;margin:0 auto;font-size:13px;line-height:1.8;color:#1e2a36;white-space:pre-wrap;}</style></head><body>'+esc(r.EmailContent)+'</body></html>');
     w.document.close();
 }
 
