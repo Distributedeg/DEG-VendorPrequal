@@ -291,6 +291,13 @@
             </div>
         </div>
         <div class="sb-section">
+            <div class="sb-section-label">Project Management</div>
+            <div class="sb-item" data-tab="pmo" onclick="switchTab('pmo')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+                Project Truth
+            </div>
+        </div>
+        <div class="sb-section">
             <div class="sb-section-label">Admin</div>
             <div class="sb-item" data-tab="schema" onclick="switchTab('schema')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -817,8 +824,12 @@
                 <div style="margin-top:20px;"><table><thead><tr><th>Status</th><th>Column Name</th><th>Internal Name</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead><tbody id="schemaTableBody"></tbody></table></div>
             </div>
         </div>
+        <div id="pmoView" style="display:none;">
+            <div class="page-header"><h2>Project <span>Truth</span></h2></div>
+            <iframe id="pmoFrame" src="" style="width:100%;height:calc(100vh - 100px);border:none;border-radius:8px;background:#fff;"></iframe>
+        </div>
     </div>
-</div>
+</div> 
 
 <div class="detail-overlay" id="mapDrawerOverlay" onclick="closeMapDrawer()">
     <div class="detail-panel" id="mapDrawerPanel" onclick="event.stopPropagation()"></div>
@@ -1277,9 +1288,14 @@ function switchTab(t){
     document.getElementById('schemaView').style.display=t==='schema'?'block':'none';
     document.getElementById('mapView').style.display=t==='map'?'block':'none';
     document.getElementById('rfpView').style.display=t==='rfp'?'block':'none';
+    document.getElementById('pmoView').style.display=t==='pmo'?'block':'none';
     if(t==='dashboard'&&listId)loadVendors();
     if(t==='map'){ if(listId&&!vendors.length)loadVendors().then(renderMap); else renderMap(); }
     if(t==='rfp')renderRfpRoster();
+    if(t==='pmo'){
+        var f=document.getElementById('pmoFrame');
+        if(!f.src||f.src==='about:blank'||!f.src.includes('dei-project-truth'))f.src='https://distributedei.github.io/dei-project-truth/';
+    }
 }
 
 function getDocsUrl(v){
